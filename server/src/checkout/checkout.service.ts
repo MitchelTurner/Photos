@@ -27,6 +27,17 @@ import { PhotosService } from '../photos/photos.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { CheckoutDto } from './dto';
 
+
+function resolveSiteOrigin(): string {
+  const site = (process.env.SITE_URL || '').replace(/\/$/, '');
+  const api = (process.env.PUBLIC_API_URL || '').replace(/\/$/, '');
+  // Prefer a real public SITE_URL; if it still points at localhost, use the API
+  // host so customers checking out from the Railway gallery can return.
+  if (site && !/localhost|127\.0\.0\.1/i.test(site)) return site;
+  if (api) return api;
+  return site;
+}
+
 @Injectable()
 export class CheckoutService {
   private readonly stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
@@ -40,8 +51,11 @@ export class CheckoutService {
     if (!process.env.STRIPE_SECRET_KEY) {
       throw new BadRequestException('STRIPE_SECRET_KEY is not configured');
     }
-    if (!process.env.SITE_URL) {
-      throw new BadRequestException('SITE_URL is not configured');
+    const siteOrigin = resolveSiteOrigin();
+    if (!siteOrigin) {
+      throw new BadRequestException(
+        'SITE_URL (or PUBLIC_API_URL) must be set for Stripe return URLs',
+      );
     }
 
     const normalized = [];
@@ -104,8 +118,8 @@ export class CheckoutService {
         client_reference_id: order.id,
         shipping_address_collection: { allowed_countries: ['US', 'CA'] },
         phone_number_collection: { enabled: true },
-        success_url: `${process.env.SITE_URL}/order/success/?session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${process.env.SITE_URL}/?checkout=cancelled`,
+        success_url: `${siteOrigin}/order/success/?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${siteOrigin}/?checkout=cancelled`,
         metadata: {
           source: 'ketchikanphotos',
           orderId: order.id,

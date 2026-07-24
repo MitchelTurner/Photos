@@ -285,79 +285,175 @@
   .foot-base{margin-top:clamp(2rem,5vw,3.5rem);padding-top:1.4rem;border-top:1px solid var(--spruce-line);display:flex;flex-wrap:wrap;gap:1rem;justify-content:space-between;font-family:"Space Mono",monospace;font-size:.68rem;letter-spacing:.06em;color:var(--ink-soft)}
   .foot-base .ink-soft{color:#6d817d}
 
-  /* ---------- LIGHTBOX ---------- */
+  /* ---------- LIGHTBOX + PRINT CHECKOUT ----------
+     Laptop heights (~768–900px) used to clip the size picker / Add button
+     because the image took 74vh and .lb could not scroll. Below:
+       • image height reserves room for the buy panel
+       • short wide viewports use a side-by-side image | order panel
+       • .lb always scrolls as a fallback
+  */
   .lb{
     position:fixed;inset:0;z-index:100;display:none;
     background:rgba(7,15,16,.94);backdrop-filter:blur(6px);
-    padding:clamp(16px,4vw,54px);
+    padding:clamp(12px,2.5vw,40px);
+    overflow-x:hidden;overflow-y:auto;
+    -webkit-overflow-scrolling:touch;
+    box-sizing:border-box;
   }
-  .lb.open{display:grid;grid-template-rows:1fr auto;gap:1.2rem}
-  .lb-stage{position:relative;display:grid;place-items:center;min-height:0}
-  .lb-frame{position:relative;max-width:min(1100px,92vw);max-height:74vh;border-radius:4px;overflow:hidden;box-shadow:0 30px 80px -20px rgba(0,0,0,.7)}
-  .lb-frame .scene{width:min(1100px,92vw);max-height:74vh}
+  .lb.open{
+    display:grid;
+    grid-template-rows:minmax(0,auto) auto;
+    gap:clamp(.7rem,1.5vw,1.2rem);
+    align-content:start;
+    min-height:100%;
+    min-height:100dvh;
+  }
+  .lb-stage{position:relative;display:grid;place-items:center;min-height:0;min-width:0}
+  .lb-frame{
+    position:relative;
+    width:fit-content;max-width:100%;
+    max-height:min(58vh, calc(100dvh - 300px));
+    border-radius:4px;overflow:hidden;
+    box-shadow:0 30px 80px -20px rgba(0,0,0,.7);
+  }
+  .lb-frame .scene{
+    display:block;
+    width:auto;height:auto;
+    max-width:min(1100px,92vw);
+    max-height:min(58vh, calc(100dvh - 300px));
+  }
   .lb-frame img.photo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-  .lb-cap{max-width:min(1100px,92vw);margin:0 auto;color:var(--fog);width:100%}
+  .lb-panel{width:min(1100px,100%);margin:0 auto;color:var(--fog);min-width:0}
+  .lb-cap{width:100%;color:var(--fog)}
   .lb-cap .cat{font-family:"Space Mono",monospace;font-size:.66rem;letter-spacing:.14em;text-transform:uppercase;color:var(--verdigris)}
-  .lb-cap .t{font-family:"Bricolage Grotesque",sans-serif;font-weight:600;font-size:clamp(1.2rem,2.5vw,1.7rem);letter-spacing:-.02em;margin-top:.3rem}
-  .lb-cap .fieldnote{font-family:"Space Mono",monospace;font-size:.72rem;color:var(--fog-2);margin-top:.7rem;display:flex;flex-wrap:wrap;gap:.3rem 1.4rem}
+  .lb-cap .t{font-family:"Bricolage Grotesque",sans-serif;font-weight:600;font-size:clamp(1.15rem,2.2vw,1.6rem);letter-spacing:-.02em;margin-top:.3rem}
+  .lb-cap .fieldnote{font-family:"Space Mono",monospace;font-size:.7rem;color:var(--fog-2);margin-top:.55rem;display:flex;flex-wrap:wrap;gap:.25rem 1.1rem}
   .lb-cap .fieldnote b{color:var(--verdigris);font-weight:400}
-  .lb-btn{position:absolute;top:50%;transform:translateY(-50%);z-index:5;background:rgba(234,237,233,.08);border:1px solid rgba(234,237,233,.2);color:var(--fog);width:48px;height:48px;border-radius:50%;cursor:pointer;font-size:1.3rem;display:grid;place-items:center;transition:background .2s var(--ease)}
+  .lb-btn{position:absolute;top:50%;transform:translateY(-50%);z-index:5;background:rgba(234,237,233,.08);border:1px solid rgba(234,237,233,.2);color:var(--fog);width:44px;height:44px;border-radius:50%;cursor:pointer;font-size:1.25rem;display:grid;place-items:center;transition:background .2s var(--ease)}
   .lb-btn:hover{background:var(--salmon);border-color:var(--salmon)}
-  .lb-prev{left:clamp(8px,2vw,24px)}
-  .lb-next{right:clamp(8px,2vw,24px)}
-  .lb-close{position:absolute;top:clamp(14px,3vw,28px);right:clamp(14px,3vw,28px);z-index:6;background:none;border:0;color:var(--fog);font-family:"Space Mono",monospace;font-size:.8rem;letter-spacing:.1em;cursor:pointer;padding:8px;text-transform:uppercase}
-  .lb-close:hover{color:var(--salmon-bright)}
-  .lb-count{position:absolute;top:clamp(14px,3vw,28px);left:clamp(14px,3vw,28px);font-family:"Space Mono",monospace;font-size:.72rem;letter-spacing:.1em;color:var(--fog-2)}
+  .lb-prev{left:clamp(4px,1.5vw,18px)}
+  .lb-next{right:clamp(4px,1.5vw,18px)}
+  .lb-close{position:absolute;top:clamp(10px,2vw,24px);right:clamp(10px,2vw,24px);z-index:6;background:rgba(7,15,16,.45);border:1px solid rgba(234,237,233,.18);border-radius:4px;color:var(--fog);font-family:"Space Mono",monospace;font-size:.72rem;letter-spacing:.1em;cursor:pointer;padding:8px 10px;text-transform:uppercase}
+  .lb-close:hover{color:var(--salmon-bright);border-color:var(--salmon-bright)}
+  .lb-count{position:absolute;top:clamp(14px,2.5vw,28px);left:clamp(14px,2.5vw,28px);font-family:"Space Mono",monospace;font-size:.72rem;letter-spacing:.1em;color:var(--fog-2);z-index:6}
+
+  /* Side-by-side on laptop / short desktop so checkout controls stay on-screen */
+  @media (min-width:960px) and (max-height:920px){
+    .lb.open{
+      grid-template-columns:minmax(0,1.4fr) minmax(300px,380px);
+      grid-template-rows:1fr;
+      gap:1.25rem 1.75rem;
+      align-items:stretch;
+      overflow:hidden;
+      padding-block:clamp(16px,3vh,36px);
+      padding-inline:clamp(28px,4vw,72px);
+    }
+    .lb-stage{height:100%;align-self:stretch}
+    .lb-panel{
+      width:100%;height:100%;margin:0;
+      overflow-y:auto;-webkit-overflow-scrolling:touch;
+      display:flex;align-items:center;
+      padding-right:4px;
+    }
+    .lb-frame,.lb-frame .scene{
+      max-height:calc(100dvh - 48px);
+      max-width:100%;
+    }
+    .lb-btn{width:40px;height:40px}
+  }
 
   /* ---------- CART BUTTON (nav) ---------- */
-  .cart-btn{position:relative;background:none;border:0;cursor:pointer;display:inline-flex;align-items:center;gap:.4rem;color:var(--ink);padding:6px 8px;margin-left:.4rem}
+  .cart-btn{position:relative;background:none;border:0;cursor:pointer;display:inline-flex;align-items:center;gap:.4rem;color:var(--ink);padding:6px 8px;margin-left:.4rem;z-index:2}
   .cart-btn svg{width:19px;height:19px}
   .cart-badge{min-width:18px;height:18px;padding:0 5px;border-radius:100px;background:var(--salmon);color:#fff;font-family:"Space Mono",monospace;font-size:.62rem;font-weight:700;display:none;align-items:center;justify-content:center;line-height:1}
   .cart-badge.show{display:inline-flex}
 
   /* ---------- LIGHTBOX BUY BLOCK ---------- */
-  .buy{margin-top:1.2rem;padding-top:1.2rem;border-top:1px solid rgba(234,237,233,.16);display:flex;flex-wrap:wrap;gap:.7rem;align-items:center}
-  .buy .sizes{display:flex;flex-wrap:wrap;gap:.4rem}
-  .size-opt{font-family:"Space Mono",monospace;font-size:.7rem;letter-spacing:.04em;color:var(--fog-2);background:rgba(234,237,233,.06);border:1px solid rgba(234,237,233,.18);border-radius:4px;padding:.5rem .7rem;cursor:pointer;transition:all .2s var(--ease);text-align:left;line-height:1.35}
+  .buy{
+    margin-top:1rem;padding-top:1rem;
+    border-top:1px solid rgba(234,237,233,.16);
+    display:grid;gap:.75rem;
+  }
+  .buy .sizes{
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:.4rem;
+  }
+  .size-opt{
+    font-family:"Space Mono",monospace;font-size:.68rem;letter-spacing:.03em;
+    color:var(--fog-2);background:rgba(234,237,233,.06);
+    border:1px solid rgba(234,237,233,.18);border-radius:4px;
+    padding:.55rem .55rem;cursor:pointer;transition:all .2s var(--ease);
+    text-align:left;line-height:1.3;width:100%;min-width:0;
+  }
   .size-opt:hover{border-color:var(--fog-2)}
+  .size-opt:disabled{opacity:.4;cursor:not-allowed}
   .size-opt[aria-pressed="true"]{background:var(--fog);color:var(--ink);border-color:var(--fog)}
-  .size-opt .pr{font-weight:700;display:block}
-  .buy .add{margin-left:auto;font-family:"Space Mono",monospace;font-size:.76rem;letter-spacing:.06em;text-transform:uppercase;background:var(--salmon);color:#fff;border:0;border-radius:4px;padding:.8rem 1.3rem;cursor:pointer;transition:background .2s var(--ease)}
+  .size-opt .pr{font-weight:700;display:block;margin-top:.15rem}
+  .buy-actions{display:grid;grid-template-columns:1fr 1fr;gap:.45rem}
+  .buy .add,.buy .add-secondary{
+    font-family:"Space Mono",monospace;font-size:.72rem;letter-spacing:.05em;
+    text-transform:uppercase;border-radius:4px;padding:.85rem .7rem;cursor:pointer;
+    transition:background .2s var(--ease),border-color .2s var(--ease),color .2s var(--ease);
+    width:100%;text-align:center;border:0;
+  }
+  .buy .add{background:var(--salmon);color:#fff}
   .buy .add:hover{background:var(--salmon-bright)}
-  .buy .lic{font-family:"Space Mono",monospace;font-size:.68rem;color:var(--fog-2);text-decoration:underline;text-underline-offset:3px;flex-basis:100%}
+  .buy .add-secondary{
+    background:transparent;color:var(--fog);
+    border:1px solid rgba(234,237,233,.28);
+  }
+  .buy .add-secondary:hover{border-color:var(--fog);background:rgba(234,237,233,.08)}
+  .buy .lic{font-family:"Space Mono",monospace;font-size:.66rem;color:var(--fog-2);text-decoration:underline;text-underline-offset:3px;line-height:1.45}
+  @media(max-width:560px){
+    .buy .sizes{grid-template-columns:1fr}
+    .buy-actions{grid-template-columns:1fr}
+  }
 
   /* ---------- CART DRAWER ---------- */
-  .overlay{position:fixed;inset:0;z-index:90;background:rgba(7,15,16,.55);backdrop-filter:blur(3px);opacity:0;visibility:hidden;transition:opacity .3s var(--ease),visibility .3s}
+  .overlay{position:fixed;inset:0;z-index:110;background:rgba(7,15,16,.55);backdrop-filter:blur(3px);opacity:0;visibility:hidden;transition:opacity .3s var(--ease),visibility .3s}
   .overlay.show{opacity:1;visibility:visible}
-  .drawer{position:fixed;top:0;right:0;z-index:95;height:100%;width:min(430px,92vw);background:var(--paper);box-shadow:-30px 0 60px -30px rgba(0,0,0,.5);transform:translateX(100%);transition:transform .38s var(--ease);display:flex;flex-direction:column}
+  .drawer{
+    position:fixed;top:0;right:0;z-index:115;
+    height:100%;height:100dvh;
+    width:min(430px,100vw);
+    max-width:100%;
+    background:var(--paper);
+    box-shadow:-30px 0 60px -30px rgba(0,0,0,.5);
+    transform:translateX(100%);transition:transform .38s var(--ease);
+    display:flex;flex-direction:column;
+    padding-bottom:env(safe-area-inset-bottom,0);
+  }
   .drawer.show{transform:none}
-  .drawer-head{display:flex;align-items:center;justify-content:space-between;padding:20px 22px;border-bottom:1px solid var(--fog-2)}
+  .drawer-head{display:flex;align-items:center;justify-content:space-between;padding:18px 20px;border-bottom:1px solid var(--fog-2);flex:none}
   .drawer-head h3{font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:1.15rem;letter-spacing:-.02em}
-  .drawer-close{background:none;border:0;cursor:pointer;font-family:"Space Mono",monospace;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft)}
+  .drawer-close{background:none;border:0;cursor:pointer;font-family:"Space Mono",monospace;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft);padding:8px}
   .drawer-close:hover{color:var(--salmon)}
-  .drawer-body{flex:1;overflow-y:auto;padding:8px 22px}
+  .drawer-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:8px 20px;min-height:0}
   .drawer-empty{padding:56px 8px;text-align:center;color:var(--ink-soft);font-family:"Space Mono",monospace;font-size:.82rem;line-height:1.7}
   .line{display:flex;gap:12px;padding:16px 0;border-bottom:1px solid var(--fog-2)}
   .line .thumb{width:58px;height:58px;border-radius:3px;flex:none}
   .line .info{flex:1;min-width:0}
-  .line .info .t{font-weight:600;font-size:.92rem;line-height:1.2}
+  .line .info .t{font-weight:600;font-size:.92rem;line-height:1.2;overflow-wrap:anywhere}
   .line .info .s{font-family:"Space Mono",monospace;font-size:.66rem;color:var(--ink-soft);margin-top:.25rem}
-  .line .info .rm{font-family:"Space Mono",monospace;font-size:.62rem;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-soft);background:none;border:0;cursor:pointer;padding:.35rem 0 0}
+  .line .info .rm{font-family:"Space Mono",monospace;font-size:.62rem;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-soft);background:none;border:0;cursor:pointer;padding:.45rem 0 0}
   .line .info .rm:hover{color:var(--salmon)}
-  .line .right{display:flex;flex-direction:column;align-items:flex-end;justify-content:space-between}
+  .line .right{display:flex;flex-direction:column;align-items:flex-end;justify-content:space-between;gap:.5rem;flex:none}
   .line .price{font-weight:700;font-size:.9rem}
   .qty{display:flex;align-items:center;border:1px solid var(--fog-2);border-radius:4px;overflow:hidden}
-  .qty button{width:26px;height:26px;background:none;border:0;cursor:pointer;font-size:1rem;color:var(--ink);line-height:1}
+  .qty button{width:32px;height:32px;background:none;border:0;cursor:pointer;font-size:1.05rem;color:var(--ink);line-height:1}
   .qty button:hover{background:var(--fog)}
-  .qty span{min-width:26px;text-align:center;font-family:"Space Mono",monospace;font-size:.76rem}
-  .drawer-foot{padding:18px 22px 22px;border-top:1px solid var(--fog-2)}
-  .drawer-foot .sub{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:.3rem}
+  .qty span{min-width:28px;text-align:center;font-family:"Space Mono",monospace;font-size:.76rem}
+  .drawer-foot{padding:16px 20px calc(18px + env(safe-area-inset-bottom,0));border-top:1px solid var(--fog-2);flex:none;background:var(--paper)}
+  .drawer-foot .sub{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:.3rem;gap:1rem}
   .drawer-foot .sub .l{font-family:"Space Mono",monospace;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft)}
-  .drawer-foot .sub .v{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:1.5rem;letter-spacing:-.02em}
+  .drawer-foot .sub .v{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:clamp(1.25rem,3vw,1.5rem);letter-spacing:-.02em}
   .drawer-foot .note{font-family:"Space Mono",monospace;font-size:.63rem;color:var(--ink-soft);margin-bottom:1rem;line-height:1.5}
   .checkout{width:100%;font-family:"Space Mono",monospace;font-size:.8rem;letter-spacing:.06em;text-transform:uppercase;background:var(--ink);color:var(--fog);border:0;border-radius:4px;padding:1rem;cursor:pointer;transition:background .2s var(--ease)}
   .checkout:hover{background:var(--salmon)}
   .checkout:disabled{opacity:.5;cursor:not-allowed}
+  .checkout-msg{font-family:"Space Mono",monospace;font-size:.68rem;color:var(--salmon);margin:0 0 .75rem;line-height:1.45;display:none}
+  .checkout-msg.show{display:block}
 
   /* ---------- TOAST ---------- */
   .toast{position:fixed;bottom:22px;left:50%;transform:translate(-50%,20px);z-index:120;background:var(--ink);color:var(--fog);font-family:"Space Mono",monospace;font-size:.75rem;letter-spacing:.02em;padding:.85rem 1.2rem;border-radius:5px;box-shadow:0 12px 30px -10px rgba(0,0,0,.5);opacity:0;visibility:hidden;transition:all .3s var(--ease);max-width:90vw;text-align:center}
@@ -527,7 +623,8 @@
   <div class="drawer-foot" id="drawerFoot" hidden>
     <div class="sub"><span class="l">Subtotal</span><span class="v" id="cartSub">$0</span></div>
     <div class="note">Shipping &amp; tax calculated at checkout · secure payment via Stripe</div>
-    <button class="checkout" id="checkoutBtn">Checkout →</button>
+    <p class="checkout-msg" id="checkoutMsg" role="alert"></p>
+    <button class="checkout" id="checkoutBtn">Checkout with Stripe →</button>
   </div>
 </aside>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
@@ -541,7 +638,7 @@
     <div class="lb-frame" id="lbFrame"></div>
     <button class="lb-btn lb-next" id="lbNext" aria-label="Next">›</button>
   </div>
-  <div class="wrap"><div class="lb-cap" id="lbCap"></div></div>
+  <div class="lb-panel"><div class="lb-cap" id="lbCap"></div></div>
 </div>
 
 <script>
@@ -731,21 +828,32 @@ function renderLB(){
     <div class="fieldnote">${fieldnote(p)}</div>
     <div class="buy">
       ${forSale?`
-      <div class="sizes">${sizes}</div>
-      <button class="add" type="button" id="lbAdd">Add print to order</button>
+      <div class="sizes" role="group" aria-label="Print size">${sizes}</div>
+      <div class="buy-actions">
+        <button class="add-secondary" type="button" id="lbAdd">Add to order</button>
+        <button class="add" type="button" id="lbAddGo">Add &amp; view order</button>
+      </div>
       `:`<p class="lic">This frame is not listed for print sale.</p>`}
       <a class="lic" href="mailto:${CONFIG.licenseEmail}?subject=${encodeURIComponent('Licensing request: '+p.title)}">or license this image for commercial / editorial use →</a>
     </div>`;
   if(forSale){
     lbCap.querySelectorAll('.size-opt').forEach(b=>b.addEventListener('click',()=>{
       lbSize=b.dataset.size;
-      lbCap.querySelectorAll('.size-opt').forEach(x=>x.setAttribute('aria-pressed', x===b));
+      lbCap.querySelectorAll('.size-opt').forEach(x=>x.setAttribute('aria-pressed', x===b ? 'true' : 'false'));
     }));
     lbCap.querySelector('#lbAdd').addEventListener('click',()=>addToCart(p,lbSize));
+    lbCap.querySelector('#lbAddGo').addEventListener('click',()=>{
+      addToCart(p,lbSize,{quiet:true});
+      closeLB();
+      openDrawer();
+    });
   }
   lbCount.textContent = `${String(lbIdx+1).padStart(2,'0')} / ${String(lbList.length).padStart(2,'0')}`;
 }
-function closeLB(){lb.classList.remove('open');document.body.style.overflow='';}
+function closeLB(){
+  lb.classList.remove('open');
+  if(!$('drawer').classList.contains('show')) document.body.style.overflow='';
+}
 function step(d){lbIdx=(lbIdx+d+lbList.length)%lbList.length;renderLB();}
 
 document.getElementById('lbClose').addEventListener('click',closeLB);
@@ -768,22 +876,40 @@ tgl.addEventListener('click',()=>{
 menu.querySelectorAll('a').forEach(a=>a.addEventListener('click',()=>{menu.classList.remove('show');tgl.setAttribute('aria-expanded','false');}));
 
 /* ---------- CART ---------- */
-/* In-memory only so it runs in any preview. When you self-host, you can
-   persist `cart` to localStorage on change and rehydrate on load. */
-let cart=[]; // {key,photoId,title,cat,size,price,qty,tone}
+const CART_KEY='kp_print_cart_v1';
 const $=id=>document.getElementById(id);
+let cart=[]; // {key,photoId,title,cat,size,price,qty,tone}
 
-function addToCart(p,sizeKey){
+function loadCart(){
+  try{
+    const raw=localStorage.getItem(CART_KEY);
+    const parsed=raw?JSON.parse(raw):[];
+    cart=Array.isArray(parsed)?parsed.filter(i=>i&&i.photoId&&i.key):[];
+  }catch(_){ cart=[]; }
+}
+function persistCart(){
+  try{ localStorage.setItem(CART_KEY, JSON.stringify(cart)); }catch(_){}
+}
+function setCheckoutMsg(text){
+  const el=$('checkoutMsg');
+  if(!el) return;
+  el.textContent=text||'';
+  el.classList.toggle('show', !!text);
+}
+
+function addToCart(p,sizeKey,opts={}){
   const opt=PRINT_OPTIONS.find(o=>o.key===sizeKey);
+  if(!opt){ toast('Pick a print size first'); return; }
   const key=p.id+"|"+sizeKey;
   const found=cart.find(i=>i.key===key);
   if(found) found.qty++;
   else cart.push({key,photoId:p.id,title:p.title,cat:p.cat,size:opt.label+" · "+opt.sub,price:opt.price,qty:1,tone:p.tone});
+  persistCart();
   renderCart();updateBadge();
-  toast(`Added <b>${opt.label}</b> · ${p.title}`);
+  if(!opts.quiet) toast(`Added <b>${opt.label}</b> · ${p.title}`);
 }
-function removeLine(key){cart=cart.filter(i=>i.key!==key);renderCart();updateBadge();}
-function setQty(key,d){const i=cart.find(x=>x.key===key);if(!i)return;i.qty=Math.max(1,i.qty+d);renderCart();updateBadge();}
+function removeLine(key){cart=cart.filter(i=>i.key!==key);persistCart();renderCart();updateBadge();setCheckoutMsg('');}
+function setQty(key,d){const i=cart.find(x=>x.key===key);if(!i)return;i.qty=Math.max(1,i.qty+d);persistCart();renderCart();updateBadge();}
 function cartCount(){return cart.reduce((n,i)=>n+i.qty,0);}
 function cartSubtotal(){return cart.reduce((n,i)=>n+i.price*i.qty,0);}
 function updateBadge(){const n=cartCount(),b=$('cartBadge');b.textContent=n;b.classList.toggle('show',n>0);}
@@ -793,11 +919,11 @@ function renderCart(){
   const body=$('drawerBody'),foot=$('drawerFoot');
   if(!cart.length){
     body.innerHTML=`<div class="drawer-empty">No prints yet.<br>Open any photograph and pick a size.</div>`;
-    foot.hidden=true;return;
+    foot.hidden=true;setCheckoutMsg('');return;
   }
   body.innerHTML=cart.map(i=>`
     <div class="line">
-      <div class="thumb" style="background:${thumbCSS(i.tone)}"></div>
+      <div class="thumb" style="background:${thumbCSS(i.tone)}" aria-hidden="true"></div>
       <div class="info">
         <div class="t">${i.title}</div>
         <div class="s">${i.size}</div>
@@ -818,44 +944,76 @@ function renderCart(){
   foot.hidden=false;
 }
 
-/* drawer open/close */
-function openDrawer(){$('drawer').classList.add('show');$('overlay').classList.add('show');$('drawer').setAttribute('aria-hidden','false');document.body.style.overflow='hidden';}
-function closeDrawer(){$('drawer').classList.remove('show');$('overlay').classList.remove('show');$('drawer').setAttribute('aria-hidden','true');if(!lb.classList.contains('open'))document.body.style.overflow='';}
+/* drawer open/close — always above lightbox so checkout stays reachable on laptop */
+function openDrawer(){
+  if(lb.classList.contains('open')) closeLB();
+  $('drawer').classList.add('show');
+  $('overlay').classList.add('show');
+  $('drawer').setAttribute('aria-hidden','false');
+  document.body.style.overflow='hidden';
+  setCheckoutMsg('');
+  const btn=$('checkoutBtn');
+  if(btn && !btn.disabled) btn.focus({preventScroll:true});
+}
+function closeDrawer(){
+  $('drawer').classList.remove('show');
+  $('overlay').classList.remove('show');
+  $('drawer').setAttribute('aria-hidden','true');
+  if(!lb.classList.contains('open')) document.body.style.overflow='';
+}
 $('cartOpen').addEventListener('click',openDrawer);
 $('drawerClose').addEventListener('click',closeDrawer);
 $('overlay').addEventListener('click',closeDrawer);
-document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('drawer').classList.contains('show'))closeDrawer();});
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'&&$('drawer').classList.contains('show')) closeDrawer();
+});
 
 /* toast */
 let toastT;
-function toast(html){const t=$('toast');t.innerHTML=html;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),2600);}
+function toast(html){const t=$('toast');t.innerHTML=html;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),2800);}
 
 /* checkout → backend → Stripe Checkout Session */
 $('checkoutBtn').addEventListener('click',async()=>{
   if(!cart.length)return;
   if(!CONFIG.checkoutEndpoint){
+    setCheckoutMsg('Checkout is not configured on this host.');
     toast('Set <b>CONFIG.checkoutEndpoint</b> to go live — see /server');
     return;
   }
-  const btn=$('checkoutBtn');btn.disabled=true;btn.textContent='Redirecting…';
+  const btn=$('checkoutBtn');
+  const prev=btn.textContent;
+  btn.disabled=true;
+  btn.textContent='Connecting to Stripe…';
+  setCheckoutMsg('');
   try{
     const res=await fetch(CONFIG.checkoutEndpoint,{
       method:'POST',
-      headers:{'Content-Type':'application/json'},
+      headers:{'Content-Type':'application/json','Accept':'application/json'},
       // send only ids + size key + qty — server owns the prices
       body:JSON.stringify({items:cart.map(i=>({
-        photoId:i.photoId, title:i.title, sizeKey:i.key.split('|')[1], qty:i.qty
+        photoId:Number(i.photoId), title:i.title, sizeKey:String(i.key).split('|')[1], qty:Number(i.qty)||1
       }))})
     });
-    if(!res.ok) throw new Error('checkout failed ('+res.status+')');
-    const data=await res.json();
-    if(data.url) window.location.href=data.url;
-    else throw new Error('no checkout URL returned');
+    const data=await res.json().catch(()=>({}));
+    if(!res.ok){
+      const msg = data.message || data.error || ('Checkout failed ('+res.status+')');
+      throw new Error(msg);
+    }
+    if(!data.url) throw new Error('No Stripe checkout URL returned');
+    btn.textContent='Redirecting…';
+    window.location.assign(data.url);
   }catch(err){
-    toast('<b>Error:</b> '+err.message);
-    btn.disabled=false;btn.textContent='Checkout →';
+    const msg = err && err.message ? err.message : 'Checkout failed';
+    setCheckoutMsg(msg);
+    toast('<b>Checkout error:</b> '+msg);
+    btn.disabled=false;
+    btn.textContent=prev || 'Checkout with Stripe →';
   }
 });
+
+loadCart();
+renderCart();
+updateBadge();
 
 /* "Request a print" in the Prints section → open the gallery hint */
 document.querySelectorAll('.cta-row .btn').forEach(b=>{
