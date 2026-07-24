@@ -121,15 +121,14 @@ Keep these in sync:
 
 ## Deploy (Railway)
 
-- Deploy `server/` as a service. Add env vars from `.env.example`.
-- Railway Postgres → `DATABASE_URL`.
-- Build: `npm install && npx prisma migrate deploy && npm run build`
-- Start: `npm run start`
-- Stripe Dashboard → webhook `https://<your-api>/webhook/stripe` for
-  `checkout.session.completed` (and optionally
-  `checkout.session.async_payment_succeeded`).
-- Host the static files (`index.html`, `order/success/`) with
-  `CONFIG.checkoutEndpoint` / `API_BASE` pointing at the API.
+Step-by-step: see **[RAILWAY.md](./RAILWAY.md)**.
+
+Summary:
+- Root Directory = `server` · config = `/server/railway.toml`
+- Add Postgres + volume at `/data/uploads`
+- Start runs `prisma migrate deploy` then the Nest API
+- Health: `GET /health` · Admin: `/admin/`
+- Stripe webhook → `https://<your-api>/webhook/stripe`
 
 ## Notes
 
