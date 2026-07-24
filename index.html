@@ -574,18 +574,19 @@ const PHOTOS = [
 /* =========================================================================
    PRINT ORDER + CHECKOUT CONFIG
    -------------------------------------------------------------------------
-   checkoutEndpoint = your backend route that creates a Stripe Checkout
-   Session (see the /server folder in this bundle). Leave "" to run the UI
-   in demo mode: the cart works, but checkout is disabled until it's live.
-   The browser NEVER sees prices or the Stripe secret — the server owns both.
+   checkoutEndpoint = NestJS POST /checkout (see /server). Leave "" for demo
+   mode: the cart works, but checkout stays disabled until the API is live.
+   The browser NEVER sends prices or secrets — server/src/catalog.ts owns both
+   Stripe amounts and Prodigi SKUs. After payment, the webhook submits the
+   order to Prodigi for print fulfillment.
    ========================================================================= */
 const CONFIG = {
-  checkoutEndpoint: "",              // e.g. "https://api.ketchikanphotos.com/checkout"
+  checkoutEndpoint: "",              // e.g. "http://localhost:3000/checkout"
   licenseEmail: "hello@ketchikanphotos.com",
 };
 
 /* Print sizes — display only. Prices in cents. The SERVER re-derives every
-   price from server/catalog.ts by sizeKey; these are just for the UI. */
+   price from server/src/catalog.ts by sizeKey; these are just for the UI. */
 const PRINT_OPTIONS = [
   { key:"8x12",  label:"8 × 12 in",  sub:"archival matte",  price:4500 },
   { key:"16x24", label:"16 × 24 in", sub:"archival matte",  price:12000 },
