@@ -62,5 +62,10 @@ export function mapStripeError(err: unknown): never {
       'Stripe rejected STRIPE_SECRET_KEY — check the value in Railway Variables.',
     );
   }
+  if (/Managed Payments/i.test(message) && /shipping/i.test(message)) {
+    throw new BadRequestException(
+      'Stripe Managed Payments is blocking shipping collection. This API disables managed_payments for print orders — redeploy if you still see this, or turn off Managed Payments default in the Stripe Dashboard.',
+    );
+  }
   throw new BadRequestException(`Stripe error: ${message}`);
 }

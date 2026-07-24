@@ -112,8 +112,12 @@ export class CheckoutService {
       }));
 
     try {
-      const session = await getStripe().checkout.sessions.create({
-        mode: 'payment',
+      // Physical prints need a ship-to address for Prodigi fulfillment.
+      // Some Stripe accounts enable Managed Payments (digital merchant-of-record)
+      // by default, which forbids shipping_address_collection. Disable it here.
+      // See: https://docs.stripe.com/payments/managed-payments
+      const sessionParams = {
+        mode: 'payment' as const,
         line_items,
         client_reference_id: order.id,
         shipping_address_collection: { allowed_countries: ['US', 'CA'] },
@@ -124,7 +128,12 @@ export class CheckoutService {
           source: 'ketchikanphotos',
           orderId: order.id,
         },
-      });
+        managed_payments: { enabled: false },
+      };
+      const session = await getStripe().checkout.sessions.create(
+        // managed_payments is newer than the pinned stripe types package
+        sessionParams as Stripe.Checkout.SessionCreateParams,
+      );
 
       if (!session.url) {
         throw new BadRequestException('Stripe did not return a checkout URL');
