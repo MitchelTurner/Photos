@@ -54,14 +54,22 @@ export class AuthService {
       loginConfigured: this.isConfigured() || Boolean(cleanEnv(process.env.ADMIN_TOKEN)),
       emailRequired: Boolean(this.adminEmail()),
       emailHint: this.emailHint(),
-      passwordSource: process.env.ADMIN_PASSWORD_HASH?.trim()
-        ? 'ADMIN_PASSWORD_HASH'
-        : cleanEnv(process.env.ADMIN_PASSWORD)
-          ? 'ADMIN_PASSWORD'
-          : cleanEnv(process.env.ADMIN_TOKEN)
-            ? 'ADMIN_TOKEN'
-            : 'none',
+      passwordSource: this.passwordSource(),
     };
+  }
+
+  /** Prefer plain ADMIN_PASSWORD (Railway UI) over a leftover HASH. */
+  private passwordSource():
+    | 'ADMIN_PASSWORD'
+    | 'ADMIN_PASSWORD_HASH'
+    | 'ADMIN_TOKEN'
+    | 'none' {
+    if (cleanEnv(process.env.ADMIN_PASSWORD)) return 'ADMIN_PASSWORD';
+    if (looksLikeBcrypt(cleanEnv(process.env.ADMIN_PASSWORD_HASH))) {
+      return 'ADMIN_PASSWORD_HASH';
+    }
+    if (cleanEnv(process.env.ADMIN_TOKEN)) return 'ADMIN_TOKEN';
+    return 'none';
   }
 
   /** Login with email + password. Supports bcrypt hash or plaintext ADMIN_PASSWORD.
@@ -205,28 +213,24 @@ export class AuthService {
   }
 
   private passwordConfigured(): boolean {
-    return Boolean(
-      cleanEnv(process.env.ADMIN_PASSWORD) ||
-        cleanEnv(process.env.ADMIN_PASSWORD_HASH) ||
-        cleanEnv(process.env.ADMIN_TOKEN),
-    );
+    return this.passwordSource() !== 'none';
   }
 
   private async passwordMatches(password: string): Promise<boolean> {
     const input = password.normalize('NFC');
+    // Prefer plaintext ADMIN_PASSWORD — common when a stale HASH is also set.
+    const plain = cleanEnv(process.env.ADMIN_PASSWORD);
+    if (plain) {
+      return safeEqual(input, plain.normalize('NFC'));
+    }
     const hash = cleanEnv(process.env.ADMIN_PASSWORD_HASH);
-    if (hash) {
+    if (looksLikeBcrypt(hash)) {
       try {
         return await bcrypt.compare(input, hash);
       } catch {
         return false;
       }
     }
-    const plain = cleanEnv(process.env.ADMIN_PASSWORD);
-    if (plain) {
-      return safeEqual(input, plain.normalize('NFC'));
-    }
-    // Legacy single shared secret
     const token = cleanEnv(process.env.ADMIN_TOKEN);
     if (token) {
       return safeEqual(input, token.normalize('NFC'));
@@ -278,6 +282,10 @@ function cleanEnv(value: string | undefined): string {
     v = v.slice(1, -1).trim();
   }
   return v;
+}
+
+function looksLikeBcrypt(value: string): boolean {
+  return /^\$2[aby]?\$\d{2}\$[./A-Za-z0-9]{53}$/.test(value);
 }
 
 function safeEqual(a: string, b: string): boolean {

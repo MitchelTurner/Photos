@@ -569,15 +569,22 @@
         const st = await fetch(apiBase() + "/auth/status", { cache: "no-store" })
           .then((r) => r.json());
         const el = document.getElementById("emailHint");
+        const bits = [];
         if (st.emailHint) {
-          el.hidden = false;
-          el.innerHTML = "Configured admin email looks like <code>" + escapeHtml(st.emailHint) + "</code>";
-          if (!emailInput.value) {
-            // Don't autofill full email (unknown); leave blank
-          }
+          bits.push("Email looks like <code>" + escapeHtml(st.emailHint) + "</code> (full value = Railway <code>ADMIN_EMAIL</code>).");
+        }
+        if (st.passwordSource === "ADMIN_PASSWORD_HASH") {
+          bits.push("Password is checked against <code>ADMIN_PASSWORD_HASH</code>. Delete that variable on Railway if you want to use plain <code>ADMIN_PASSWORD</code>.");
+        } else if (st.passwordSource === "ADMIN_PASSWORD") {
+          bits.push("Password = Railway <code>ADMIN_PASSWORD</code> (exact value, no quotes).");
+        } else if (st.passwordSource === "ADMIN_TOKEN") {
+          bits.push("Password = Railway <code>ADMIN_TOKEN</code>.");
         } else if (!st.loginConfigured) {
+          bits.push("Set <code>ADMIN_EMAIL</code> and <code>ADMIN_PASSWORD</code> on Railway, then redeploy.");
+        }
+        if (bits.length) {
           el.hidden = false;
-          el.textContent = "Admin login is not configured — set ADMIN_EMAIL and ADMIN_PASSWORD on Railway.";
+          el.innerHTML = bits.join(" ");
         }
       } catch (_) { /* ignore */ }
     }
