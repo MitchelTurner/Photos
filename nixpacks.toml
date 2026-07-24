@@ -1,4 +1,4 @@
-# Used when Railway Root Directory = server
+# Force Node — without this, index.html makes Nixpacks pick nginx.
 providers = ["node"]
 
 [variables]

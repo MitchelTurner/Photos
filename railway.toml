@@ -1,12 +1,12 @@
-# Monorepo: point the Railway service Root Directory to /server
-# and Config File path to /server/railway.toml (or use the copy below).
+# Works with Root Directory = "/" (repo root).
+# Prefer Root Directory = "server" + /server/railway.toml when possible.
 
 [build]
 builder = "NIXPACKS"
-buildCommand = "cd server && npm ci && npm run build"
+buildCommand = "npm run build"
 
 [deploy]
-startCommand = "cd server && npm run start:prod"
+startCommand = "npm run start:prod"
 healthcheckPath = "/health"
 healthcheckTimeout = 120
 restartPolicyType = "ON_FAILURE"
