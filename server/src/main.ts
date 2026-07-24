@@ -35,8 +35,13 @@ async function bootstrap() {
 
   // Reflect allowed Origins so credentialed admin/login works from the static site.
   // Set SITE_URL (and optional CORS_ORIGINS) to your SiteGround origin(s).
-  // CORS_ALLOW_ANY=true reflects every Origin (handy while wiring the domain).
-  const allowAny = process.env.CORS_ALLOW_ANY === 'true';
+  // CORS_ALLOW_ANY=true reflects every Origin. Default true until SITE_URL is a real host.
+  const siteIsPlaceholder =
+    !process.env.SITE_URL ||
+    /localhost|127\.0\.0\.1/i.test(process.env.SITE_URL);
+  const allowAny =
+    process.env.CORS_ALLOW_ANY === 'true' ||
+    (process.env.CORS_ALLOW_ANY !== 'false' && siteIsPlaceholder);
 
   app.enableCors({
     origin: (origin, callback) => {
