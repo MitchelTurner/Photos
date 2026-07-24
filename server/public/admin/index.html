@@ -113,6 +113,7 @@
       font-size: .72rem;
       margin: .75rem 0 0;
       min-height: 1.2em;
+      white-space: pre-wrap;
     }
     .msg.err { color: var(--salmon); }
     .msg.ok { color: var(--ok); }
@@ -149,16 +150,22 @@
     .empty { color: #4a5c61; }
     .hint { font-size: .9rem; color: #3a4d52; margin: 0 0 1rem; line-height: 1.45; }
     a.home { color: var(--sea); font-size: .9rem; }
-    details.advanced { margin-top: .5rem; }
-    details.advanced summary {
-      cursor: pointer;
-      font-family: "Space Mono", monospace;
-      font-size: .68rem;
-      letter-spacing: .05em;
-      text-transform: uppercase;
-      color: #4a5c61;
-      margin-bottom: .75rem;
+    .api-box {
+      border: 1px dashed var(--line);
+      border-radius: 4px;
+      padding: .85rem .9rem .35rem;
+      margin-bottom: 1rem;
+      background: rgba(255,255,255,.4);
     }
+    .api-status {
+      font-family: "Space Mono", monospace;
+      font-size: .65rem;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+      margin: -.4rem 0 .85rem;
+    }
+    .api-status.ok { color: var(--ok); }
+    .api-status.bad { color: var(--salmon); }
   </style>
 </head>
 <body>
@@ -176,18 +183,17 @@
 
     <section class="panel gate" id="gate">
       <h2>Sign in</h2>
-      <p class="hint">Use the admin email and password from your Railway env (<code>ADMIN_EMAIL</code> / <code>ADMIN_PASSWORD</code>).</p>
+      <p class="hint">Use <code>ADMIN_EMAIL</code> and <code>ADMIN_PASSWORD</code> from Railway. Prefer opening this page on the API: <code>https://your-api.up.railway.app/admin/</code></p>
       <form id="loginForm">
+        <div class="api-box">
+          <label for="apiBase">API base URL</label>
+          <input id="apiBase" type="url" required placeholder="https://your-api.up.railway.app" />
+          <p class="api-status" id="apiStatus">Checking API…</p>
+        </div>
         <label for="email">Email</label>
         <input id="email" name="email" type="email" autocomplete="username" required placeholder="you@example.com" />
         <label for="password">Password</label>
         <input id="password" name="password" type="password" autocomplete="current-password" required />
-        <details class="advanced">
-          <summary>API settings</summary>
-          <label for="apiBase">API base URL</label>
-          <input id="apiBase" type="url" placeholder="https://your-api.up.railway.app" />
-          <p class="hint" style="margin-top:-.25rem">Leave blank when this page is served from the API (<code>/admin/</code>).</p>
-        </details>
         <button type="submit" id="loginBtn">Sign in</button>
         <p class="msg" id="gateMsg"></p>
       </form>
@@ -259,9 +265,13 @@
   </div>
 
   <script>
-    /* Default API — blank means same origin (best when opened at https://api…/admin/). */
+    /*
+      Set this to your Railway API origin if you host /admin on the static site.
+      Prefer opening https://YOUR-API.up.railway.app/admin/ instead.
+      Override anytime with ?api=https://YOUR-API.up.railway.app
+    */
     const CONFIG = {
-      apiBase: localStorage.getItem("kp_api") || "",
+      apiBase: "", // e.g. "https://your-api.up.railway.app"
     };
 
     const gate = document.getElementById("gate");
@@ -271,19 +281,24 @@
     const listEl = document.getElementById("list");
     const who = document.getElementById("who");
     const apiInput = document.getElementById("apiBase");
+    const apiStatus = document.getElementById("apiStatus");
     const emailInput = document.getElementById("email");
     const passwordInput = document.getElementById("password");
 
-    apiInput.value = CONFIG.apiBase;
+    const params = new URLSearchParams(location.search);
+    const fromQuery = (params.get("api") || "").trim();
+    const stored = (localStorage.getItem("kp_api") || "").trim();
+    // Same-origin only counts when this page is served under /admin on the API.
+    const sameOriginGuess = location.pathname.indexOf("/admin") === 0 ? location.origin : "";
+
+    apiInput.value = fromQuery || CONFIG.apiBase || stored || sameOriginGuess;
     emailInput.value = localStorage.getItem("kp_admin_email") || "";
 
     let sessionToken = sessionStorage.getItem("kp_session") || "";
+    let apiReady = false;
 
     function apiBase() {
-      const typed = (apiInput.value || CONFIG.apiBase || "").trim().replace(/\/$/, "");
-      if (typed) return typed;
-      // Same-origin when admin is served from the API
-      return location.origin;
+      return (apiInput.value || "").trim().replace(/\/$/, "");
     }
 
     function authHeaders(json) {
@@ -298,8 +313,24 @@
       el.className = "msg " + (ok ? "ok" : text ? "err" : "");
     }
 
+    function explainHttpError(status, path, data) {
+      if (status === 404) {
+        return (
+          "404 at " + apiBase() + path + "\n" +
+          "That host is not the Nest API (or an old deploy). Set API base URL to your Railway service, e.g. https://xxxx.up.railway.app — then open /admin/ on that same host."
+        );
+      }
+      return (data && data.message) || ("Request failed (" + status + ")");
+    }
+
     async function api(path, opts = {}) {
-      const res = await fetch(apiBase() + path, {
+      const base = apiBase();
+      if (!base) {
+        const err = new Error("Set your Railway API base URL first");
+        err.status = 0;
+        throw err;
+      }
+      const res = await fetch(base + path, {
         credentials: "include",
         ...opts,
         headers: { ...authHeaders(opts.json), ...(opts.headers || {}) },
@@ -307,12 +338,39 @@
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        const err = new Error(data.message || "Request failed (" + res.status + ")");
+        const err = new Error(explainHttpError(res.status, path, data));
         err.status = res.status;
         err.data = data;
         throw err;
       }
       return data;
+    }
+
+    async function checkApi() {
+      const base = apiBase();
+      if (!base) {
+        apiReady = false;
+        apiStatus.textContent = "Enter your Railway API URL";
+        apiStatus.className = "api-status bad";
+        return false;
+      }
+      apiStatus.textContent = "Checking " + base + "/health …";
+      apiStatus.className = "api-status";
+      try {
+        const res = await fetch(base + "/health", { credentials: "include" });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || !data.ok) throw new Error("bad health");
+        apiReady = true;
+        apiStatus.textContent = "API connected · " + base;
+        apiStatus.className = "api-status ok";
+        localStorage.setItem("kp_api", base);
+        return true;
+      } catch {
+        apiReady = false;
+        apiStatus.textContent = "Cannot reach API at " + base + " — check the URL / redeploy";
+        apiStatus.className = "api-status bad";
+        return false;
+      }
     }
 
     function showApp(email) {
@@ -332,6 +390,7 @@
     }
 
     async function restoreSession() {
+      if (!(await checkApi())) return false;
       try {
         const me = await api("/auth/me");
         showApp(me.email);
@@ -342,14 +401,20 @@
       }
     }
 
+    apiInput.addEventListener("change", () => { checkApi(); });
+    apiInput.addEventListener("blur", () => { checkApi(); });
+
     document.getElementById("loginForm").addEventListener("submit", async (e) => {
       e.preventDefault();
       const btn = document.getElementById("loginBtn");
       btn.disabled = true;
       setMsg(gateMsg, "Signing in…", true);
-      localStorage.setItem("kp_api", apiInput.value.trim());
+      localStorage.setItem("kp_api", apiBase());
       localStorage.setItem("kp_admin_email", emailInput.value.trim());
       try {
+        if (!(await checkApi())) {
+          throw new Error("API not reachable — fix the API base URL above");
+        }
         const data = await api("/auth/login", {
           method: "POST",
           json: {

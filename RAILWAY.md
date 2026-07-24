@@ -24,8 +24,10 @@ The API image is built from `server/Dockerfile` (Node 22 + OpenSSL + Prisma).
 | Variable | Notes |
 |----------|--------|
 | `DATABASE_URL` | From Postgres |
-| `SITE_URL` | Static site origin |
-| `PUBLIC_API_URL` | Railway HTTPS domain |
+| `SITE_URL` | Static site origin (e.g. `https://ketchikanphotos.com`) — required for CORS |
+| `PUBLIC_API_URL` | `https://phot-api.up.railway.app` |
+| `CORS_ORIGINS` | Extra static origins, comma-separated |
+| `CORS_ALLOW_ANY` | `true` while testing admin from any host (optional) |
 | `STRIPE_SECRET_KEY` | Stripe secret |
 | `STRIPE_WEBHOOK_SECRET` | Webhook signing secret |
 | `PRODIGI_API_KEY` | Prodigi key |

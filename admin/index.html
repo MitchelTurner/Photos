@@ -271,7 +271,8 @@
       Override anytime with ?api=https://YOUR-API.up.railway.app
     */
     const CONFIG = {
-      apiBase: "", // e.g. "https://your-api.up.railway.app"
+      // Prefill your Railway API. Override with ?api=... or the form field.
+      apiBase: "https://phot-api.up.railway.app",
     };
 
     const gate = document.getElementById("gate");
@@ -357,18 +358,30 @@
       apiStatus.textContent = "Checking " + base + "/health …";
       apiStatus.className = "api-status";
       try {
-        const res = await fetch(base + "/health", { credentials: "include" });
+        // No credentials on health — avoids false CORS failures before login.
+        const res = await fetch(base + "/health", {
+          method: "GET",
+          cache: "no-store",
+          headers: { Accept: "application/json" },
+        });
         const data = await res.json().catch(() => ({}));
-        if (!res.ok || !data.ok) throw new Error("bad health");
+        if (!res.ok || !data.ok) {
+          throw new Error("Health check failed (" + res.status + ")");
+        }
         apiReady = true;
         apiStatus.textContent = "API connected · " + base;
         apiStatus.className = "api-status ok";
         localStorage.setItem("kp_api", base);
         return true;
-      } catch {
+      } catch (err) {
         apiReady = false;
-        apiStatus.textContent = "Cannot reach API at " + base + " — check the URL / redeploy";
+        const hint =
+          "Cannot reach API at " + base +
+          " — open https://phot-api.up.railway.app/admin/ (same host), " +
+          "or set Railway SITE_URL / CORS_ORIGINS / CORS_ALLOW_ANY=true for your static site.";
+        apiStatus.textContent = hint;
         apiStatus.className = "api-status bad";
+        console.warn("API health failed", err);
         return false;
       }
     }

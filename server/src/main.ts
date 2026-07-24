@@ -8,6 +8,10 @@ import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './common/http-exception.filter';
 import { uploadDir } from './photos/upload.config';
 
+function stripSlash(url: string): string {
+  return url.replace(/\/$/, '');
+}
+
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     // Required so Stripe can verify webhook signatures against the raw body.
@@ -23,18 +27,39 @@ async function bootstrap() {
     .split(',')
     .map((s) => s.trim())
     .filter(Boolean);
-  const origins = [
-    siteUrl,
-    publicApi,
-    ...extra,
-    'http://localhost:5500',
-    'http://127.0.0.1:5500',
-    'http://localhost:3000',
-    'http://127.0.0.1:3000',
-  ].filter(Boolean);
+  const allowlist = new Set(
+    [siteUrl, publicApi, ...extra, 'http://localhost:5500', 'http://127.0.0.1:5500', 'http://localhost:3000', 'http://127.0.0.1:3000']
+      .filter(Boolean)
+      .map(stripSlash),
+  );
+
+  // Reflect allowed Origins so credentialed admin/login works from the static site.
+  // Set SITE_URL (and optional CORS_ORIGINS) to your SiteGround origin(s).
+  // CORS_ALLOW_ANY=true reflects every Origin (handy while wiring the domain).
+  const allowAny = process.env.CORS_ALLOW_ANY === 'true';
 
   app.enableCors({
-    origin: origins,
+    origin: (origin, callback) => {
+      if (!origin) {
+        callback(null, true);
+        return;
+      }
+      const o = stripSlash(origin);
+      if (allowAny || allowlist.has(o)) {
+        callback(null, true);
+        return;
+      }
+      // Always allow the API host itself (admin served from /admin on Railway).
+      try {
+        if (publicApi && new URL(o).host === new URL(stripSlash(publicApi)).host) {
+          callback(null, true);
+          return;
+        }
+      } catch {
+        /* ignore bad PUBLIC_API_URL */
+      }
+      callback(null, false);
+    },
     methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Admin-Token'],
     credentials: true,
