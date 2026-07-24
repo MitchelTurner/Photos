@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Ketchikan Photos — Southeast Alaska</title>
+<meta name="description" content="Photographs of Ketchikan, Alaska — the Salmon Capital of the World. The fishing fleet, Creek Street, totem poles, Misty Fjords, and the light between the rain." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&family=Hanken+Grotesk:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    /* Palette — pulled from the Tongass: deep spruce water, fog, weathered cedar,
+       totem paint. Salmon accent is deliberately deeper/cooler than the usual clay. */
+    --night:#0B1618;
+    --deep:#0F2327;
+    --spruce:#173735;
+    --spruce-line:#26514D;
+    --fog:#EAEDE9;
+    --fog-2:#CBD3CE;
+    --paper:#F1F3EF;
+    --ink:#0B1618;
+    --ink-soft:#40514E;
+    --cedar:#A8764E;
+    --salmon:#BE5236;      /* totem cedar-red / sockeye */
+    --salmon-bright:#D06544;
+    --verdigris:#3E8E86;    /* totem teal, secondary accent */
+
+    --maxw:1280px;
+    --gutter:clamp(20px,5vw,64px);
+    --ease:cubic-bezier(.22,1,.36,1);
+  }
+
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:"Hanken Grotesk",system-ui,sans-serif;
+    font-size:17px;
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+  img{display:block;max-width:100%}
+  a{color:inherit;text-decoration:none}
+
+  .wrap{max-width:var(--maxw);margin:0 auto;padding-inline:var(--gutter)}
+
+  .mono{font-family:"Space Mono",monospace}
+  .eyebrow{
+    font-family:"Space Mono",monospace;
+    font-size:.72rem;letter-spacing:.22em;text-transform:uppercase;
+    color:var(--verdigris);
+  }
+
+  /* ---------- NAV ---------- */
+  header.nav{
+    position:sticky;top:0;z-index:50;
+    background:color-mix(in srgb, var(--paper) 82%, transparent);
+    backdrop-filter:blur(12px) saturate(1.2);
+    border-bottom:1px solid rgba(11,22,24,.08);
+  }
+  .nav-inner{
+    display:flex;align-items:center;justify-content:space-between;
+    height:66px;
+  }
+  .wordmark{display:flex;align-items:baseline;gap:.55rem;line-height:1}
+  .wordmark .mk{
+    font-family:"Bricolage Grotesque",sans-serif;
+    font-weight:800;font-size:1.18rem;letter-spacing:-.02em;
+  }
+  .wordmark .mk .dot{color:var(--salmon)}
+  .wordmark .coord{
+    font-family:"Space Mono",monospace;font-size:.66rem;
+    color:var(--ink-soft);letter-spacing:.04em;
+  }
+  nav.links{display:flex;gap:1.6rem}
+  nav.links a{
+    font-size:.82rem;font-weight:600;letter-spacing:.01em;
+    color:var(--ink-soft);position:relative;padding-block:4px;
+    transition:color .25s var(--ease);
+  }
+  nav.links a::after{
+    content:"";position:absolute;left:0;bottom:-2px;height:2px;width:0;
+    background:var(--salmon);transition:width .3s var(--ease);
+  }
+  nav.links a:hover{color:var(--ink)}
+  nav.links a:hover::after{width:100%}
+  .nav-toggle{display:none;background:none;border:0;cursor:pointer;padding:8px}
+  .nav-toggle span{display:block;width:22px;height:2px;background:var(--ink);margin:4px 0}
+
+  /* ---------- HERO ---------- */
+  .hero{
+    position:relative;background:var(--night);color:var(--fog);
+    overflow:hidden;isolation:isolate;
+  }
+  .hero-grad{
+    position:absolute;inset:0;z-index:-2;
+    background:
+      radial-gradient(120% 90% at 78% -10%, rgba(62,142,134,.28), transparent 55%),
+      radial-gradient(90% 80% at 10% 110%, rgba(190,82,54,.20), transparent 60%),
+      linear-gradient(180deg,#0B1618 0%, #10282B 55%, #0B1618 100%);
+  }
+  /* faint drifting mist */
+  .hero-mist{
+    position:absolute;inset:-20%;z-index:-1;opacity:.5;
+    background:radial-gradient(60% 50% at 30% 40%, rgba(255,255,255,.05), transparent 70%),
+               radial-gradient(50% 40% at 70% 60%, rgba(255,255,255,.04), transparent 70%);
+    animation:drift 26s ease-in-out infinite alternate;
+  }
+  @keyframes drift{from{transform:translate3d(-2%, -1%,0) scale(1.05)}to{transform:translate3d(3%,2%,0) scale(1.12)}}
+
+  .hero-inner{
+    padding-block:clamp(72px,12vw,150px);
+    display:grid;gap:2.4rem;
+  }
+  .hero-top{display:flex;flex-wrap:wrap;gap:.9rem 1.4rem;align-items:center}
+  .tag{
+    font-family:"Space Mono",monospace;font-size:.7rem;letter-spacing:.18em;
+    text-transform:uppercase;color:var(--fog-2);
+    border:1px solid var(--spruce-line);border-radius:100px;padding:.4rem .8rem;
+  }
+  h1.title{
+    font-family:"Bricolage Grotesque",sans-serif;
+    font-weight:800;letter-spacing:-.035em;line-height:.92;
+    font-size:clamp(3.2rem,11vw,8.5rem);
+    text-wrap:balance;
+  }
+  h1.title em{font-style:normal;color:var(--salmon-bright);display:block}
+  .hero-sub{
+    max-width:46ch;font-size:clamp(1rem,1.5vw,1.18rem);color:var(--fog-2);
+  }
+  .hero-meta{
+    display:flex;flex-wrap:wrap;gap:1.6rem;padding-top:1.4rem;
+    border-top:1px solid var(--spruce-line);margin-top:.6rem;
+  }
+  .hero-meta div{min-width:120px}
+  .hero-meta .k{font-family:"Space Mono",monospace;font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--verdigris)}
+  .hero-meta .v{font-size:1.05rem;font-weight:600;color:var(--fog);margin-top:.15rem}
+  .scroll-cue{
+    display:inline-flex;align-items:center;gap:.6rem;margin-top:.4rem;
+    font-family:"Space Mono",monospace;font-size:.72rem;letter-spacing:.1em;
+    color:var(--fog-2);
+  }
+  .scroll-cue .arw{width:1px;height:34px;background:linear-gradient(var(--salmon),transparent);animation:pulse 2.2s ease-in-out infinite}
+  @keyframes pulse{0%,100%{opacity:.3;transform:scaleY(.7)}50%{opacity:1;transform:scaleY(1)}}
+
+  /* ---------- GALLERY SECTION ---------- */
+  .gallery-head{
+    padding-top:clamp(56px,8vw,96px);
+    display:flex;flex-wrap:wrap;gap:1.4rem 2rem;align-items:flex-end;justify-content:space-between;
+  }
+  .gallery-head h2{
+    font-family:"Bricolage Grotesque",sans-serif;font-weight:700;
+    font-size:clamp(1.8rem,4vw,2.8rem);letter-spacing:-.03em;line-height:1;
+  }
+  .gallery-head p{color:var(--ink-soft);max-width:40ch;margin-top:.5rem}
+
+  .filters{
+    display:flex;flex-wrap:wrap;gap:.5rem;
+    padding-block:clamp(24px,3.5vw,36px);position:sticky;top:66px;z-index:20;
+    background:linear-gradient(var(--paper) 70%, transparent);
+  }
+  .filter{
+    font-family:"Space Mono",monospace;font-size:.72rem;letter-spacing:.08em;
+    text-transform:uppercase;
+    border:1px solid var(--fog-2);background:transparent;color:var(--ink-soft);
+    padding:.5rem .9rem;border-radius:100px;cursor:pointer;
+    transition:all .22s var(--ease);white-space:nowrap;
+  }
+  .filter:hover{border-color:var(--ink);color:var(--ink)}
+  .filter[aria-pressed="true"]{
+    background:var(--ink);color:var(--fog);border-color:var(--ink);
+  }
+  .filter .ct{opacity:.55;margin-left:.4rem}
+
+  /* Masonry via CSS columns */
+  .grid{
+    columns:3 300px;column-gap:18px;padding-bottom:clamp(60px,8vw,110px);
+  }
+  .card{
+    break-inside:avoid;margin-bottom:18px;position:relative;
+    border-radius:4px;overflow:hidden;cursor:pointer;background:var(--deep);
+    opacity:0;transform:translateY(22px);
+    transition:opacity .7s var(--ease),transform .7s var(--ease),box-shadow .35s var(--ease);
+    box-shadow:0 1px 2px rgba(11,22,24,.12);
+  }
+  .card.in{opacity:1;transform:none}
+  .card:hover{box-shadow:0 18px 40px -18px rgba(11,22,24,.55)}
+  .card.hide{display:none}
+  .card .frame{position:relative;width:100%}
+  /* placeholder scene = duotone gradient until a real image is dropped in */
+  .card .scene{width:100%;display:block}
+  .card img.photo{width:100%;height:100%;object-fit:cover;position:absolute;inset:0;opacity:0;transition:opacity .6s var(--ease)}
+  .card img.photo.loaded{opacity:1}
+
+  .card .cat{
+    position:absolute;top:12px;left:12px;z-index:3;
+    font-family:"Space Mono",monospace;font-size:.6rem;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--fog);
+    background:rgba(11,22,24,.5);backdrop-filter:blur(4px);
+    padding:.3rem .55rem;border-radius:3px;
+  }
+  .card .plate{
+    position:absolute;inset:auto 0 0 0;z-index:3;
+    padding:16px 14px 13px;
+    background:linear-gradient(transparent, rgba(11,22,24,.85) 55%);
+    color:var(--fog);
+    transform:translateY(8px);opacity:0;
+    transition:opacity .35s var(--ease),transform .35s var(--ease);
+  }
+  .card:hover .plate,.card:focus-visible .plate{opacity:1;transform:none}
+  .card .plate .t{font-family:"Bricolage Grotesque",sans-serif;font-weight:600;font-size:1rem;line-height:1.15}
+  .card .plate .fieldnote{
+    font-family:"Space Mono",monospace;font-size:.62rem;letter-spacing:.02em;
+    color:var(--fog-2);margin-top:.4rem;display:flex;flex-wrap:wrap;gap:.15rem .8rem;
+  }
+  .card .plate .fieldnote span{display:inline-flex;gap:.35rem;align-items:center}
+  .card .plate .fieldnote b{color:var(--verdigris);font-weight:400}
+
+  .empty{
+    display:none;padding:60px 0 90px;text-align:center;color:var(--ink-soft);
+    font-family:"Space Mono",monospace;letter-spacing:.04em;
+  }
+
+  /* ---------- ABOUT ---------- */
+  .about{background:var(--night);color:var(--fog);position:relative;overflow:hidden}
+  .about::before{
+    content:"";position:absolute;inset:0;
+    background:radial-gradient(80% 60% at 85% 15%, rgba(62,142,134,.18), transparent 60%);
+  }
+  .about-inner{
+    padding-block:clamp(72px,10vw,128px);position:relative;
+    display:grid;grid-template-columns:1.1fr 1fr;gap:clamp(2.4rem,6vw,5rem);align-items:start;
+  }
+  .about h2{
+    font-family:"Bricolage Grotesque",sans-serif;font-weight:700;
+    font-size:clamp(2rem,4.5vw,3.4rem);letter-spacing:-.03em;line-height:1.02;text-wrap:balance;
+  }
+  .about h2 em{font-style:normal;color:var(--salmon-bright)}
+  .about p{color:var(--fog-2);margin-top:1.4rem;max-width:52ch}
+  .stats{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--spruce-line);border:1px solid var(--spruce-line);border-radius:6px;overflow:hidden}
+  .stat{background:var(--deep);padding:1.6rem 1.4rem}
+  .stat .n{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:clamp(1.9rem,3.5vw,2.6rem);letter-spacing:-.03em;line-height:1}
+  .stat .n .u{font-size:.9rem;color:var(--verdigris);margin-left:.2rem}
+  .stat .l{font-family:"Space Mono",monospace;font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;color:var(--fog-2);margin-top:.5rem}
+
+  /* ---------- PRINTS / CTA ---------- */
+  .prints{padding-block:clamp(64px,9vw,110px)}
+  .prints-inner{
+    border:1px solid var(--fog-2);border-radius:8px;padding:clamp(32px,6vw,64px);
+    display:grid;grid-template-columns:1.3fr .9fr;gap:clamp(2rem,5vw,4rem);align-items:center;
+    background:
+      linear-gradient(135deg, rgba(62,142,134,.06), transparent 60%),
+      var(--fog);
+  }
+  .prints h2{font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:clamp(1.7rem,3.5vw,2.6rem);letter-spacing:-.03em;line-height:1.05;text-wrap:balance}
+  .prints p{color:var(--ink-soft);margin-top:1rem;max-width:44ch}
+  .cta-row{display:flex;flex-wrap:wrap;gap:.8rem;margin-top:1.8rem}
+  .btn{
+    font-family:"Space Mono",monospace;font-size:.78rem;letter-spacing:.06em;text-transform:uppercase;
+    padding:.85rem 1.4rem;border-radius:4px;cursor:pointer;border:1px solid var(--ink);
+    background:var(--ink);color:var(--fog);transition:all .22s var(--ease);
+  }
+  .btn:hover{background:var(--salmon);border-color:var(--salmon)}
+  .btn.ghost{background:transparent;color:var(--ink)}
+  .btn.ghost:hover{background:var(--ink);color:var(--fog)}
+  .prints .side .k{font-family:"Space Mono",monospace;font-size:.66rem;letter-spacing:.12em;text-transform:uppercase;color:var(--verdigris)}
+  .prints .side .row{display:flex;justify-content:space-between;padding:.75rem 0;border-bottom:1px solid var(--fog-2);font-size:.92rem}
+  .prints .side .row:last-child{border-bottom:0}
+  .prints .side .row b{font-weight:600}
+
+  /* ---------- FOOTER ---------- */
+  footer{background:var(--night);color:var(--fog-2);padding-block:clamp(48px,7vw,80px)}
+  .foot-inner{display:flex;flex-wrap:wrap;gap:2rem;justify-content:space-between;align-items:flex-start}
+  footer .mk{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:1.4rem;color:var(--fog);letter-spacing:-.02em}
+  footer .mk .dot{color:var(--salmon)}
+  footer .blurb{max-width:34ch;font-size:.9rem;margin-top:.7rem}
+  .foot-cols{display:flex;gap:clamp(2rem,6vw,4.5rem);flex-wrap:wrap}
+  .foot-col h4{font-family:"Space Mono",monospace;font-size:.66rem;letter-spacing:.14em;text-transform:uppercase;color:var(--verdigris);margin-bottom:.8rem}
+  .foot-col a{display:block;font-size:.9rem;padding:.22rem 0;color:var(--fog-2);transition:color .2s var(--ease)}
+  .foot-col a:hover{color:var(--fog)}
+  .foot-base{margin-top:clamp(2rem,5vw,3.5rem);padding-top:1.4rem;border-top:1px solid var(--spruce-line);display:flex;flex-wrap:wrap;gap:1rem;justify-content:space-between;font-family:"Space Mono",monospace;font-size:.68rem;letter-spacing:.06em;color:var(--ink-soft)}
+  .foot-base .ink-soft{color:#6d817d}
+
+  /* ---------- LIGHTBOX ---------- */
+  .lb{
+    position:fixed;inset:0;z-index:100;display:none;
+    background:rgba(7,15,16,.94);backdrop-filter:blur(6px);
+    padding:clamp(16px,4vw,54px);
+  }
+  .lb.open{display:grid;grid-template-rows:1fr auto;gap:1.2rem}
+  .lb-stage{position:relative;display:grid;place-items:center;min-height:0}
+  .lb-frame{position:relative;max-width:min(1100px,92vw);max-height:74vh;border-radius:4px;overflow:hidden;box-shadow:0 30px 80px -20px rgba(0,0,0,.7)}
+  .lb-frame .scene{width:min(1100px,92vw);max-height:74vh}
+  .lb-frame img.photo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+  .lb-cap{max-width:min(1100px,92vw);margin:0 auto;color:var(--fog);width:100%}
+  .lb-cap .cat{font-family:"Space Mono",monospace;font-size:.66rem;letter-spacing:.14em;text-transform:uppercase;color:var(--verdigris)}
+  .lb-cap .t{font-family:"Bricolage Grotesque",sans-serif;font-weight:600;font-size:clamp(1.2rem,2.5vw,1.7rem);letter-spacing:-.02em;margin-top:.3rem}
+  .lb-cap .fieldnote{font-family:"Space Mono",monospace;font-size:.72rem;color:var(--fog-2);margin-top:.7rem;display:flex;flex-wrap:wrap;gap:.3rem 1.4rem}
+  .lb-cap .fieldnote b{color:var(--verdigris);font-weight:400}
+  .lb-btn{position:absolute;top:50%;transform:translateY(-50%);z-index:5;background:rgba(234,237,233,.08);border:1px solid rgba(234,237,233,.2);color:var(--fog);width:48px;height:48px;border-radius:50%;cursor:pointer;font-size:1.3rem;display:grid;place-items:center;transition:background .2s var(--ease)}
+  .lb-btn:hover{background:var(--salmon);border-color:var(--salmon)}
+  .lb-prev{left:clamp(8px,2vw,24px)}
+  .lb-next{right:clamp(8px,2vw,24px)}
+  .lb-close{position:absolute;top:clamp(14px,3vw,28px);right:clamp(14px,3vw,28px);z-index:6;background:none;border:0;color:var(--fog);font-family:"Space Mono",monospace;font-size:.8rem;letter-spacing:.1em;cursor:pointer;padding:8px;text-transform:uppercase}
+  .lb-close:hover{color:var(--salmon-bright)}
+  .lb-count{position:absolute;top:clamp(14px,3vw,28px);left:clamp(14px,3vw,28px);font-family:"Space Mono",monospace;font-size:.72rem;letter-spacing:.1em;color:var(--fog-2)}
+
+  /* ---------- CART BUTTON (nav) ---------- */
+  .cart-btn{position:relative;background:none;border:0;cursor:pointer;display:inline-flex;align-items:center;gap:.4rem;color:var(--ink);padding:6px 8px;margin-left:.4rem}
+  .cart-btn svg{width:19px;height:19px}
+  .cart-badge{min-width:18px;height:18px;padding:0 5px;border-radius:100px;background:var(--salmon);color:#fff;font-family:"Space Mono",monospace;font-size:.62rem;font-weight:700;display:none;align-items:center;justify-content:center;line-height:1}
+  .cart-badge.show{display:inline-flex}
+
+  /* ---------- LIGHTBOX BUY BLOCK ---------- */
+  .buy{margin-top:1.2rem;padding-top:1.2rem;border-top:1px solid rgba(234,237,233,.16);display:flex;flex-wrap:wrap;gap:.7rem;align-items:center}
+  .buy .sizes{display:flex;flex-wrap:wrap;gap:.4rem}
+  .size-opt{font-family:"Space Mono",monospace;font-size:.7rem;letter-spacing:.04em;color:var(--fog-2);background:rgba(234,237,233,.06);border:1px solid rgba(234,237,233,.18);border-radius:4px;padding:.5rem .7rem;cursor:pointer;transition:all .2s var(--ease);text-align:left;line-height:1.35}
+  .size-opt:hover{border-color:var(--fog-2)}
+  .size-opt[aria-pressed="true"]{background:var(--fog);color:var(--ink);border-color:var(--fog)}
+  .size-opt .pr{font-weight:700;display:block}
+  .buy .add{margin-left:auto;font-family:"Space Mono",monospace;font-size:.76rem;letter-spacing:.06em;text-transform:uppercase;background:var(--salmon);color:#fff;border:0;border-radius:4px;padding:.8rem 1.3rem;cursor:pointer;transition:background .2s var(--ease)}
+  .buy .add:hover{background:var(--salmon-bright)}
+  .buy .lic{font-family:"Space Mono",monospace;font-size:.68rem;color:var(--fog-2);text-decoration:underline;text-underline-offset:3px;flex-basis:100%}
+
+  /* ---------- CART DRAWER ---------- */
+  .overlay{position:fixed;inset:0;z-index:90;background:rgba(7,15,16,.55);backdrop-filter:blur(3px);opacity:0;visibility:hidden;transition:opacity .3s var(--ease),visibility .3s}
+  .overlay.show{opacity:1;visibility:visible}
+  .drawer{position:fixed;top:0;right:0;z-index:95;height:100%;width:min(430px,92vw);background:var(--paper);box-shadow:-30px 0 60px -30px rgba(0,0,0,.5);transform:translateX(100%);transition:transform .38s var(--ease);display:flex;flex-direction:column}
+  .drawer.show{transform:none}
+  .drawer-head{display:flex;align-items:center;justify-content:space-between;padding:20px 22px;border-bottom:1px solid var(--fog-2)}
+  .drawer-head h3{font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:1.15rem;letter-spacing:-.02em}
+  .drawer-close{background:none;border:0;cursor:pointer;font-family:"Space Mono",monospace;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft)}
+  .drawer-close:hover{color:var(--salmon)}
+  .drawer-body{flex:1;overflow-y:auto;padding:8px 22px}
+  .drawer-empty{padding:56px 8px;text-align:center;color:var(--ink-soft);font-family:"Space Mono",monospace;font-size:.82rem;line-height:1.7}
+  .line{display:flex;gap:12px;padding:16px 0;border-bottom:1px solid var(--fog-2)}
+  .line .thumb{width:58px;height:58px;border-radius:3px;flex:none}
+  .line .info{flex:1;min-width:0}
+  .line .info .t{font-weight:600;font-size:.92rem;line-height:1.2}
+  .line .info .s{font-family:"Space Mono",monospace;font-size:.66rem;color:var(--ink-soft);margin-top:.25rem}
+  .line .info .rm{font-family:"Space Mono",monospace;font-size:.62rem;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-soft);background:none;border:0;cursor:pointer;padding:.35rem 0 0}
+  .line .info .rm:hover{color:var(--salmon)}
+  .line .right{display:flex;flex-direction:column;align-items:flex-end;justify-content:space-between}
+  .line .price{font-weight:700;font-size:.9rem}
+  .qty{display:flex;align-items:center;border:1px solid var(--fog-2);border-radius:4px;overflow:hidden}
+  .qty button{width:26px;height:26px;background:none;border:0;cursor:pointer;font-size:1rem;color:var(--ink);line-height:1}
+  .qty button:hover{background:var(--fog)}
+  .qty span{min-width:26px;text-align:center;font-family:"Space Mono",monospace;font-size:.76rem}
+  .drawer-foot{padding:18px 22px 22px;border-top:1px solid var(--fog-2)}
+  .drawer-foot .sub{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:.3rem}
+  .drawer-foot .sub .l{font-family:"Space Mono",monospace;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft)}
+  .drawer-foot .sub .v{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:1.5rem;letter-spacing:-.02em}
+  .drawer-foot .note{font-family:"Space Mono",monospace;font-size:.63rem;color:var(--ink-soft);margin-bottom:1rem;line-height:1.5}
+  .checkout{width:100%;font-family:"Space Mono",monospace;font-size:.8rem;letter-spacing:.06em;text-transform:uppercase;background:var(--ink);color:var(--fog);border:0;border-radius:4px;padding:1rem;cursor:pointer;transition:background .2s var(--ease)}
+  .checkout:hover{background:var(--salmon)}
+  .checkout:disabled{opacity:.5;cursor:not-allowed}
+
+  /* ---------- TOAST ---------- */
+  .toast{position:fixed;bottom:22px;left:50%;transform:translate(-50%,20px);z-index:120;background:var(--ink);color:var(--fog);font-family:"Space Mono",monospace;font-size:.75rem;letter-spacing:.02em;padding:.85rem 1.2rem;border-radius:5px;box-shadow:0 12px 30px -10px rgba(0,0,0,.5);opacity:0;visibility:hidden;transition:all .3s var(--ease);max-width:90vw;text-align:center}
+  .toast.show{opacity:1;visibility:visible;transform:translate(-50%,0)}
+  .toast b{color:var(--salmon-bright)}
+
+  :focus-visible{outline:2px solid var(--salmon-bright);outline-offset:3px;border-radius:2px}
+
+  /* ---------- RESPONSIVE ---------- */
+  @media(max-width:860px){
+    .about-inner{grid-template-columns:1fr}
+    .prints-inner{grid-template-columns:1fr}
+    nav.links{position:fixed;inset:66px 0 auto 0;flex-direction:column;background:var(--paper);
+      padding:1rem var(--gutter) 1.6rem;gap:.2rem;border-bottom:1px solid var(--fog-2);
+      transform:translateY(-120%);transition:transform .35s var(--ease);box-shadow:0 20px 40px -20px rgba(0,0,0,.3)}
+    nav.links.show{transform:none}
+    nav.links a{padding:.7rem 0;font-size:1rem}
+    .nav-toggle{display:block}
+  }
+  @media(prefers-reduced-motion:reduce){
+    *{animation:none!important;transition:none!important}
+    .card{opacity:1;transform:none}
+  }
+</style>
+</head>
+<body>
+
+<!-- ============ NAV ============ -->
+<header class="nav">
+  <div class="wrap nav-inner">
+    <a class="wordmark" href="#top" aria-label="Ketchikan Photos home">
+      <span class="mk">Ketchikan<span class="dot">.</span>Photos</span>
+      <span class="coord">55.34°N&nbsp;131.65°W</span>
+    </a>
+    <button class="cart-btn" id="cartOpen" aria-label="Open print order">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h2l2.4 12.4a2 2 0 0 0 2 1.6h7.7a2 2 0 0 0 2-1.6L23 6H6"/><circle cx="10" cy="20" r="1"/><circle cx="18" cy="20" r="1"/></svg>
+      <span class="cart-badge" id="cartBadge">0</span>
+    </button>
+    <button class="nav-toggle" aria-label="Menu" aria-expanded="false"><span></span><span></span><span></span></button>
+    <nav class="links" id="menu">
+      <a href="#gallery">Gallery</a>
+      <a href="#about">The Town</a>
+      <a href="#prints">Prints &amp; Licensing</a>
+      <a href="#contact">Contact</a>
+    </nav>
+  </div>
+</header>
+
+<!-- ============ HERO ============ -->
+<section class="hero" id="top">
+  <div class="hero-grad"></div>
+  <div class="hero-mist"></div>
+  <div class="wrap hero-inner">
+    <div class="hero-top">
+      <span class="tag">Southeast Alaska</span>
+      <span class="tag">Est. as a cannery, 1885</span>
+      <span class="tag">150+ in. of rain / yr</span>
+    </div>
+    <h1 class="title">The Salmon Capital<em>of the World.</em></h1>
+    <p class="hero-sub">Photographs from a town on stilts at the edge of the Inside Passage — the fishing fleet, Creek Street, the totem poles, and the light that shows up between the rain.</p>
+    <div class="hero-meta">
+      <div><div class="k">Island</div><div class="v">Revillagigedo</div></div>
+      <div><div class="k">Population</div><div class="v">~8,000</div></div>
+      <div><div class="k">Roads in / out</div><div class="v">None</div></div>
+      <div><div class="k">First port</div><div class="v">Inside Passage</div></div>
+    </div>
+    <a href="#gallery" class="scroll-cue"><span class="arw"></span> Scroll to the galleries</a>
+  </div>
+</section>
+
+<!-- ============ GALLERY ============ -->
+<main class="wrap" id="gallery">
+  <div class="gallery-head">
+    <div>
+      <span class="eyebrow">The Collection</span>
+      <h2>What the harbor looks like</h2>
+    </div>
+    <p>Filter by what you came to see. Hover any frame for its field note.</p>
+  </div>
+
+  <div class="filters" id="filters" role="group" aria-label="Filter photographs by category"></div>
+
+  <div class="grid" id="grid"></div>
+  <div class="empty" id="empty">No frames in this category yet.</div>
+</main>
+
+<!-- ============ ABOUT ============ -->
+<section class="about" id="about">
+  <div class="wrap about-inner">
+    <div>
+      <span class="eyebrow">The Town</span>
+      <h2>No roads lead here.<em> You arrive by water, or by wing.</em></h2>
+      <p>Ketchikan clings to the western shore of Revillagigedo Island in the Tongass — the largest temperate rainforest left in the country. The coast range walls it off from the mainland, so everything comes and goes across the Tongass Narrows: the fishing fleet, the ferries, the float planes lifting off at low tide.</p>
+      <p>It runs on fish and, more recently, on the cruise ships that fill Front Street from May through September. Between the two, it stays what it has always been — a working waterfront in the rain, with the world's largest standing collection of totem poles a short drive out of downtown.</p>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="n">150<span class="u">in</span></div><div class="l">Rain per year</div></div>
+      <div class="stat"><div class="n">500<span class="u">mi</span></div><div class="l">North of Seattle</div></div>
+      <div class="stat"><div class="n">5</div><div class="l">Species of salmon</div></div>
+      <div class="stat"><div class="n">1M+</div><div class="l">Visitors a season</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ PRINTS / CTA ============ -->
+<section class="prints wrap" id="prints">
+  <div class="prints-inner">
+    <div>
+      <span class="eyebrow">Prints &amp; Licensing</span>
+      <h2>Take a piece of the coast home — or license it for work.</h2>
+      <p>Every frame here is available as an archival print, and most are cleared for commercial and editorial licensing. Tell me the image and the use, and I'll send a quote.</p>
+      <div class="cta-row">
+        <a href="#contact" class="btn">Request a print</a>
+        <a href="#contact" class="btn ghost">License an image</a>
+      </div>
+    </div>
+    <div class="side">
+      <div class="k" style="margin-bottom:.6rem">Print sizes</div>
+      <div class="row"><span>8 × 12 in&nbsp;·&nbsp;archival matte</span><b>$45</b></div>
+      <div class="row"><span>16 × 24 in&nbsp;·&nbsp;archival matte</span><b>$120</b></div>
+      <div class="row"><span>24 × 36 in&nbsp;·&nbsp;metal / acrylic</span><b>$280</b></div>
+      <div class="row"><span>Licensing</span><b>By use</b></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FOOTER ============ -->
+<footer id="contact">
+  <div class="wrap">
+    <div class="foot-inner">
+      <div>
+        <div class="mk">Ketchikan<span class="dot">.</span>Photos</div>
+        <p class="blurb">Photographs of Ketchikan, Alaska and the surrounding Inside Passage. Shot on the water, in the rain, at 55° north.</p>
+      </div>
+      <div class="foot-cols">
+        <div class="foot-col">
+          <h4>Galleries</h4>
+          <a href="#gallery">Harbor &amp; Fleet</a>
+          <a href="#gallery">Creek Street</a>
+          <a href="#gallery">Totem Poles</a>
+          <a href="#gallery">Misty Fjords</a>
+          <a href="#gallery">Wildlife</a>
+        </div>
+        <div class="foot-col">
+          <h4>Contact</h4>
+          <a href="mailto:hello@ketchikanphotos.com">hello@ketchikanphotos.com</a>
+          <a href="#prints">Prints &amp; licensing</a>
+          <a href="#top">Back to top ↑</a>
+        </div>
+      </div>
+    </div>
+    <div class="foot-base">
+      <span>© <span id="yr"></span> Ketchikan Photos · Ketchikan, AK 99901</span>
+      <span class="ink-soft">55.3422° N, 131.6461° W · Tongass Narrows</span>
+    </div>
+  </div>
+</footer>
+
+<!-- ============ CART DRAWER ============ -->
+<div class="overlay" id="overlay"></div>
+<aside class="drawer" id="drawer" aria-label="Print order" aria-hidden="true">
+  <div class="drawer-head">
+    <h3>Your prints</h3>
+    <button class="drawer-close" id="drawerClose">Close ✕</button>
+  </div>
+  <div class="drawer-body" id="drawerBody"></div>
+  <div class="drawer-foot" id="drawerFoot" hidden>
+    <div class="sub"><span class="l">Subtotal</span><span class="v" id="cartSub">$0</span></div>
+    <div class="note">Shipping &amp; tax calculated at checkout · secure payment via Stripe</div>
+    <button class="checkout" id="checkoutBtn">Checkout →</button>
+  </div>
+</aside>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<!-- ============ LIGHTBOX ============ -->
+<div class="lb" id="lb" role="dialog" aria-modal="true" aria-label="Photograph viewer">
+  <button class="lb-close" id="lbClose">Close ✕</button>
+  <span class="lb-count" id="lbCount"></span>
+  <div class="lb-stage">
+    <button class="lb-btn lb-prev" id="lbPrev" aria-label="Previous">‹</button>
+    <div class="lb-frame" id="lbFrame"></div>
+    <button class="lb-btn lb-next" id="lbNext" aria-label="Next">›</button>
+  </div>
+  <div class="wrap"><div class="lb-cap" id="lbCap"></div></div>
+</div>
+
+<script>
+/* =========================================================================
+   PHOTO DATA
+   -------------------------------------------------------------------------
+   To use your real photographs, add a `src` to any entry below (URL or a
+   relative path like "images/creek-street.jpg"). Until then, each frame
+   shows an intentional duotone placeholder so the layout stays composed.
+   `h` is the placeholder aspect ratio (height factor) so the masonry varies.
+   ========================================================================= */
+const PHOTOS = [
+  { id:1,  cat:"Harbor & Fleet", title:"Thomas Basin at slack tide", coord:"55.339°N 131.641°W", cond:"Overcast · 51°F · light rain", when:"06:14", h:1.28, tone:["#12333a","#2a5a55"], src:"" },
+  { id:2,  cat:"Creek Street",   title:"The boardwalk on its pilings", coord:"55.342°N 131.643°W", cond:"Fog · 48°F", when:"08:02", h:1.5,  tone:["#1c2e33","#7d5a3c"], src:"" },
+  { id:3,  cat:"Totem Poles",    title:"Saxman, cedar and paint", coord:"55.318°N 131.610°W", cond:"Broken cloud · 53°F", when:"11:20", h:1.34, tone:["#2a1512","#b04a30"], src:"" },
+  { id:4,  cat:"Misty Fjords",   title:"New Eddystone Rock", coord:"55.549°N 130.760°W", cond:"Low ceiling · 46°F", when:"09:41", h:1.15, tone:["#101f28","#39777f"], src:"" },
+  { id:5,  cat:"Wildlife",       title:"Bald eagle off the rocks", coord:"55.351°N 131.671°W", cond:"Drizzle · 49°F", when:"07:33", h:1.42, tone:["#182b2c","#8a9a8f"], src:"" },
+  { id:6,  cat:"Weather & Light",title:"Sun breaks over the Narrows", coord:"55.345°N 131.700°W", cond:"Clearing · 55°F", when:"18:57", h:1.2,  tone:["#241a12","#c9743f"], src:"" },
+  { id:7,  cat:"Harbor & Fleet", title:"Mending net on the deck", coord:"55.340°N 131.640°W", cond:"Rain · 50°F", when:"10:08", h:1.5,  tone:["#14282e","#3d6b64"], src:"" },
+  { id:8,  cat:"Aerials",        title:"Downtown & Pennock Island", coord:"55.344°N 131.646°W", cond:"Hazy · 54°F · from 400 ft", when:"13:22", h:1.1,  tone:["#122a2f","#4d8a82"], src:"" },
+  { id:9,  cat:"Creek Street",   title:"Married Man's Trail, wet cedar", coord:"55.343°N 131.642°W", cond:"Rain · 47°F", when:"15:46", h:1.36, tone:["#1a241f","#5c7048"], src:"" },
+  { id:10, cat:"Misty Fjords",   title:"Cliff walls, cloud on the water", coord:"55.560°N 130.780°W", cond:"Overcast · 45°F", when:"12:10", h:1.55, tone:["#0f1f26","#356b73"], src:"" },
+  { id:11, cat:"Weather & Light",title:"Float plane lifting at low tide", coord:"55.355°N 131.712°W", cond:"Broken cloud · 52°F", when:"08:49", h:1.18, tone:["#1d2733","#6f88a0"], src:"" },
+  { id:12, cat:"Wildlife",       title:"Sockeye holding in the creek", coord:"55.341°N 131.638°W", cond:"Rain · 49°F", when:"16:31", h:1.3,  tone:["#231512","#a83f2c"], src:"" },
+  { id:13, cat:"Harbor & Fleet", title:"Evening light on the hulls", coord:"55.338°N 131.643°W", cond:"Clearing · 53°F", when:"19:40", h:1.44, tone:["#1a1410","#c56b3a"], src:"" },
+  { id:14, cat:"Totem Poles",    title:"Clan house, Totem Bight", coord:"55.418°N 131.780°W", cond:"Overcast · 50°F", when:"14:05", h:1.24, tone:["#22160f","#8a5a34"], src:"" },
+  { id:15, cat:"Aerials",        title:"The fleet from above the basin", coord:"55.339°N 131.641°W", cond:"Drizzle · 48°F · from 350 ft", when:"11:58", h:1.5,  tone:["#12262b","#437d76"], src:"" },
+  { id:16, cat:"Weather & Light",title:"150 inches a year, in one frame", coord:"55.344°N 131.646°W", cond:"Heavy rain · 47°F", when:"17:12", h:1.32, tone:["#141d22","#4a6f78"], src:"" },
+];
+
+/* =========================================================================
+   PRINT ORDER + CHECKOUT CONFIG
+   -------------------------------------------------------------------------
+   checkoutEndpoint = your backend route that creates a Stripe Checkout
+   Session (see the /server folder in this bundle). Leave "" to run the UI
+   in demo mode: the cart works, but checkout is disabled until it's live.
+   The browser NEVER sees prices or the Stripe secret — the server owns both.
+   ========================================================================= */
+const CONFIG = {
+  checkoutEndpoint: "",              // e.g. "https://api.ketchikanphotos.com/checkout"
+  licenseEmail: "hello@ketchikanphotos.com",
+};
+
+/* Print sizes — display only. Prices in cents. The SERVER re-derives every
+   price from server/catalog.ts by sizeKey; these are just for the UI. */
+const PRINT_OPTIONS = [
+  { key:"8x12",  label:"8 × 12 in",  sub:"archival matte",  price:4500 },
+  { key:"16x24", label:"16 × 24 in", sub:"archival matte",  price:12000 },
+  { key:"24x36", label:"24 × 36 in", sub:"metal / acrylic", price:28000 },
+];
+const money = c => "$" + (c/100).toLocaleString("en-US",{minimumFractionDigits:(c%100?2:0),maximumFractionDigits:2});
+
+const CATS = ["All", ...Array.from(new Set(PHOTOS.map(p=>p.cat)))];
+
+/* ---------- build placeholder scene (duotone) ---------- */
+function sceneSVG(p){
+  const w=800, h=Math.round(800*p.h);
+  const [a,b]=p.tone;
+  return `data:image/svg+xml;utf8,`+encodeURIComponent(
+`<svg xmlns='http://www.w3.org/2000/svg' width='${w}' height='${h}'>
+<defs>
+<linearGradient id='g' x1='0' y1='0' x2='0.4' y2='1'>
+<stop offset='0' stop-color='${a}'/><stop offset='1' stop-color='${b}'/>
+</linearGradient>
+<filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/>
+<feColorMatrix type='saturate' values='0'/><feComponentTransfer><feFuncA type='linear' slope='0.05'/></feComponentTransfer></filter>
+</defs>
+<rect width='100%' height='100%' fill='url(#g)'/>
+<rect width='100%' height='100%' filter='url(#n)' opacity='0.6'/>
+<rect x='0' y='${h-3}' width='100%' height='3' fill='${b}' opacity='0.5'/>
+</svg>`);
+}
+
+/* ---------- render filters ---------- */
+const filtersEl=document.getElementById('filters');
+CATS.forEach((c,i)=>{
+  const b=document.createElement('button');
+  b.className='filter';
+  b.setAttribute('aria-pressed', i===0?'true':'false');
+  b.dataset.cat=c;
+  const n = c==="All" ? PHOTOS.length : PHOTOS.filter(p=>p.cat===c).length;
+  b.innerHTML = `${c}<span class="ct">${n}</span>`;
+  b.addEventListener('click',()=>applyFilter(c,b));
+  filtersEl.appendChild(b);
+});
+
+/* ---------- render grid ---------- */
+const grid=document.getElementById('grid');
+function fieldnote(p){
+  return `<span><b>◎</b>${p.coord}</span><span><b>⌁</b>${p.cond}</span><span><b>◷</b>${p.when}</span>`;
+}
+PHOTOS.forEach(p=>{
+  const card=document.createElement('article');
+  card.className='card';card.dataset.cat=p.cat;card.tabIndex=0;
+  card.setAttribute('role','button');
+  card.setAttribute('aria-label',`${p.title} — open`);
+  card.innerHTML=`
+    <div class="frame">
+      <img class="scene" src="${sceneSVG(p)}" alt="" aria-hidden="true">
+      ${p.src?`<img class="photo" alt="${p.title}, Ketchikan Alaska">`:''}
+      <span class="cat">${p.cat}</span>
+      <div class="plate">
+        <div class="t">${p.title}</div>
+        <div class="fieldnote">${fieldnote(p)}</div>
+      </div>
+    </div>`;
+  if(p.src){
+    const im=card.querySelector('img.photo');
+    im.addEventListener('load',()=>im.classList.add('loaded'));
+    im.src=p.src;
+  }
+  card.addEventListener('click',()=>openLB(p.id));
+  card.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openLB(p.id);}});
+  grid.appendChild(card);
+});
+
+/* ---------- filtering ---------- */
+let current="All";
+function applyFilter(cat,btn){
+  current=cat;
+  document.querySelectorAll('.filter').forEach(f=>f.setAttribute('aria-pressed', f===btn?'true':'false'));
+  let shown=0;
+  document.querySelectorAll('.card').forEach(c=>{
+    const match = cat==="All" || c.dataset.cat===cat;
+    c.classList.toggle('hide',!match);
+    if(match) shown++;
+  });
+  document.getElementById('empty').style.display = shown? 'none':'block';
+}
+
+/* ---------- reveal on scroll ---------- */
+const io=new IntersectionObserver((es)=>{
+  es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}});
+},{rootMargin:'0px 0px -8% 0px',threshold:.05});
+document.querySelectorAll('.card').forEach(c=>io.observe(c));
+
+/* ---------- lightbox ---------- */
+const lb=document.getElementById('lb'),
+      lbFrame=document.getElementById('lbFrame'),
+      lbCap=document.getElementById('lbCap'),
+      lbCount=document.getElementById('lbCount');
+let lbList=[], lbIdx=0;
+
+function visibleList(){
+  return PHOTOS.filter(p=> current==="All" || p.cat===current);
+}
+function openLB(id){
+  lbList=visibleList();
+  lbIdx=lbList.findIndex(p=>p.id===id);
+  if(lbIdx<0){lbList=[PHOTOS.find(p=>p.id===id)];lbIdx=0;}
+  renderLB();
+  lb.classList.add('open');
+  document.body.style.overflow='hidden';
+  document.getElementById('lbClose').focus();
+}
+let lbSize = PRINT_OPTIONS[0].key;
+function renderLB(){
+  const p=lbList[lbIdx];
+  lbFrame.innerHTML = `<img class="scene" src="${sceneSVG({...p,h:0.68})}" alt="">`+
+    (p.src?`<img class="photo" src="${p.src}" alt="${p.title}, Ketchikan Alaska">`:'');
+  const sizes = PRINT_OPTIONS.map(o=>`
+    <button class="size-opt" type="button" data-size="${o.key}" aria-pressed="${o.key===lbSize}">
+      ${o.label}<span class="pr">${money(o.price)}</span>
+    </button>`).join("");
+  lbCap.innerHTML = `
+    <div class="cat">${p.cat}</div>
+    <div class="t">${p.title}</div>
+    <div class="fieldnote"><b>◎</b> ${p.coord}<span></span><b>⌁</b> ${p.cond}<span></span><b>◷</b> ${p.when}</div>
+    <div class="buy">
+      <div class="sizes">${sizes}</div>
+      <button class="add" type="button" id="lbAdd">Add print to order</button>
+      <a class="lic" href="mailto:${CONFIG.licenseEmail}?subject=${encodeURIComponent('Licensing request: '+p.title)}">or license this image for commercial / editorial use →</a>
+    </div>`;
+  lbCap.querySelectorAll('.size-opt').forEach(b=>b.addEventListener('click',()=>{
+    lbSize=b.dataset.size;
+    lbCap.querySelectorAll('.size-opt').forEach(x=>x.setAttribute('aria-pressed', x===b));
+  }));
+  lbCap.querySelector('#lbAdd').addEventListener('click',()=>addToCart(p,lbSize));
+  lbCount.textContent = `${String(lbIdx+1).padStart(2,'0')} / ${String(lbList.length).padStart(2,'0')}`;
+}
+function closeLB(){lb.classList.remove('open');document.body.style.overflow='';}
+function step(d){lbIdx=(lbIdx+d+lbList.length)%lbList.length;renderLB();}
+
+document.getElementById('lbClose').addEventListener('click',closeLB);
+document.getElementById('lbPrev').addEventListener('click',()=>step(-1));
+document.getElementById('lbNext').addEventListener('click',()=>step(1));
+lb.addEventListener('click',e=>{if(e.target===lb||e.target.classList.contains('lb-stage'))closeLB();});
+document.addEventListener('keydown',e=>{
+  if(!lb.classList.contains('open'))return;
+  if(e.key==='Escape')closeLB();
+  if(e.key==='ArrowLeft')step(-1);
+  if(e.key==='ArrowRight')step(1);
+});
+
+/* ---------- mobile menu ---------- */
+const tgl=document.querySelector('.nav-toggle'),menu=document.getElementById('menu');
+tgl.addEventListener('click',()=>{
+  const open=menu.classList.toggle('show');
+  tgl.setAttribute('aria-expanded',open);
+});
+menu.querySelectorAll('a').forEach(a=>a.addEventListener('click',()=>{menu.classList.remove('show');tgl.setAttribute('aria-expanded','false');}));
+
+/* ---------- CART ---------- */
+/* In-memory only so it runs in any preview. When you self-host, you can
+   persist `cart` to localStorage on change and rehydrate on load. */
+let cart=[]; // {key,photoId,title,cat,size,price,qty,tone}
+const $=id=>document.getElementById(id);
+
+function addToCart(p,sizeKey){
+  const opt=PRINT_OPTIONS.find(o=>o.key===sizeKey);
+  const key=p.id+"|"+sizeKey;
+  const found=cart.find(i=>i.key===key);
+  if(found) found.qty++;
+  else cart.push({key,photoId:p.id,title:p.title,cat:p.cat,size:opt.label+" · "+opt.sub,price:opt.price,qty:1,tone:p.tone});
+  renderCart();updateBadge();
+  toast(`Added <b>${opt.label}</b> · ${p.title}`);
+}
+function removeLine(key){cart=cart.filter(i=>i.key!==key);renderCart();updateBadge();}
+function setQty(key,d){const i=cart.find(x=>x.key===key);if(!i)return;i.qty=Math.max(1,i.qty+d);renderCart();updateBadge();}
+function cartCount(){return cart.reduce((n,i)=>n+i.qty,0);}
+function cartSubtotal(){return cart.reduce((n,i)=>n+i.price*i.qty,0);}
+function updateBadge(){const n=cartCount(),b=$('cartBadge');b.textContent=n;b.classList.toggle('show',n>0);}
+function thumbCSS(t){return `linear-gradient(150deg,${t[0]},${t[1]})`;}
+
+function renderCart(){
+  const body=$('drawerBody'),foot=$('drawerFoot');
+  if(!cart.length){
+    body.innerHTML=`<div class="drawer-empty">No prints yet.<br>Open any photograph and pick a size.</div>`;
+    foot.hidden=true;return;
+  }
+  body.innerHTML=cart.map(i=>`
+    <div class="line">
+      <div class="thumb" style="background:${thumbCSS(i.tone)}"></div>
+      <div class="info">
+        <div class="t">${i.title}</div>
+        <div class="s">${i.size}</div>
+        <button class="rm" type="button" data-k="${i.key}">Remove</button>
+      </div>
+      <div class="right">
+        <div class="price">${money(i.price*i.qty)}</div>
+        <div class="qty">
+          <button type="button" data-k="${i.key}" data-d="-1" aria-label="Decrease quantity">−</button>
+          <span>${i.qty}</span>
+          <button type="button" data-k="${i.key}" data-d="1" aria-label="Increase quantity">+</button>
+        </div>
+      </div>
+    </div>`).join("");
+  body.querySelectorAll('.rm').forEach(b=>b.onclick=()=>removeLine(b.dataset.k));
+  body.querySelectorAll('.qty button').forEach(b=>b.onclick=()=>setQty(b.dataset.k,+b.dataset.d));
+  $('cartSub').textContent=money(cartSubtotal());
+  foot.hidden=false;
+}
+
+/* drawer open/close */
+function openDrawer(){$('drawer').classList.add('show');$('overlay').classList.add('show');$('drawer').setAttribute('aria-hidden','false');document.body.style.overflow='hidden';}
+function closeDrawer(){$('drawer').classList.remove('show');$('overlay').classList.remove('show');$('drawer').setAttribute('aria-hidden','true');if(!lb.classList.contains('open'))document.body.style.overflow='';}
+$('cartOpen').addEventListener('click',openDrawer);
+$('drawerClose').addEventListener('click',closeDrawer);
+$('overlay').addEventListener('click',closeDrawer);
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('drawer').classList.contains('show'))closeDrawer();});
+
+/* toast */
+let toastT;
+function toast(html){const t=$('toast');t.innerHTML=html;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),2600);}
+
+/* checkout → backend → Stripe Checkout Session */
+$('checkoutBtn').addEventListener('click',async()=>{
+  if(!cart.length)return;
+  if(!CONFIG.checkoutEndpoint){
+    toast('Set <b>CONFIG.checkoutEndpoint</b> to go live — see /server');
+    return;
+  }
+  const btn=$('checkoutBtn');btn.disabled=true;btn.textContent='Redirecting…';
+  try{
+    const res=await fetch(CONFIG.checkoutEndpoint,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      // send only ids + size key + qty — server owns the prices
+      body:JSON.stringify({items:cart.map(i=>({
+        photoId:i.photoId, title:i.title, sizeKey:i.key.split('|')[1], qty:i.qty
+      }))})
+    });
+    if(!res.ok) throw new Error('checkout failed ('+res.status+')');
+    const data=await res.json();
+    if(data.url) window.location.href=data.url;
+    else throw new Error('no checkout URL returned');
+  }catch(err){
+    toast('<b>Error:</b> '+err.message);
+    btn.disabled=false;btn.textContent='Checkout →';
+  }
+});
+
+/* "Request a print" in the Prints section → open the gallery hint */
+document.querySelectorAll('.cta-row .btn').forEach(b=>{
+  if(/print/i.test(b.textContent)) b.addEventListener('click',e=>{e.preventDefault();document.getElementById('gallery').scrollIntoView({behavior:'smooth'});toast('Open any photo, pick a size, add to your order');});
+});
+
+document.getElementById('yr').textContent=new Date().getFullYear();
+</script>
+</body>
+</html>
