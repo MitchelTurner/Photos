@@ -466,7 +466,7 @@
         }
         const missing = rows.filter((p) => p.fileMissing).length;
         const warn = missing
-          ? `<p class="empty" style="color:#b04a30">⚠ ${missing} photo${missing===1?"":"s"} missing image file on disk. Mount a Railway volume at <code>/data/uploads</code> (UPLOAD_DIR), then delete these rows and re-upload.</p>`
+          ? `<p class="empty" style="color:#b04a30">⚠ ${missing} photo${missing===1?"":"s"} have no saved image data (lost before DB storage). Delete those rows and re-upload — new uploads persist in Postgres across redeploys.</p>`
           : "";
         listEl.innerHTML = warn + rows.map((p) => `
           <article class="item" data-id="${p.id}" data-sale="${p.forSale}" data-pub="${p.published}" style="${p.fileMissing ? "opacity:.55;outline:1px solid #b04a30" : ""}">

@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { Photo } from '@prisma/client';
 import { existsSync } from 'fs';
-import { unlink } from 'fs/promises';
+import { readFile, unlink } from 'fs/promises';
 import { join } from 'path';
 import { PrismaService } from '../prisma/prisma.service';
 import { mediaUrl, uploadDir } from './upload.config';
@@ -57,35 +57,49 @@ export class PhotosService {
     return existsSync(join(uploadDir(), filename));
   }
 
+  async mediaStats() {
+    const [total, published, withBlob] = await Promise.all([
+      this.prisma.photo.count(),
+      this.prisma.photo.count({ where: { published: true } }),
+      this.prisma.photoBlob.count(),
+    ]);
+    return {
+      total,
+      published,
+      withBlob,
+      uploadDir: uploadDir(),
+    };
+  }
+
   async listPublished(): Promise<PhotoPublic[]> {
     const rows = await this.prisma.photo.findMany({
-      where: { published: true },
+      where: {
+        published: true,
+        blob: { isNot: null },
+      },
       orderBy: [{ sortOrder: 'asc' }, { id: 'desc' }],
     });
-    // Skip DB rows whose upload file is missing (common after redeploy without a volume)
-    return rows.filter((p) => this.fileOnDisk(p.filename)).map((p) => this.toPublic(p));
+    return rows.map((p) => this.toPublic(p));
   }
 
   async listAll(): Promise<PhotoPublic[]> {
     const rows = await this.prisma.photo.findMany({
       orderBy: [{ sortOrder: 'asc' }, { id: 'desc' }],
     });
-    return rows.map((p) => ({
-      ...this.toPublic(p),
-      // admin list includes unpublished via same shape; published flag via forSale only —
-      // attach via extra fields by casting in controller response
-    }));
+    return rows.map((p) => this.toPublic(p));
   }
 
   async listAllAdmin() {
     const rows = await this.prisma.photo.findMany({
+      include: { blob: { select: { size: true } } },
       orderBy: [{ sortOrder: 'asc' }, { id: 'desc' }],
     });
     return rows.map((p) => ({
       ...this.toPublic(p),
       published: p.published,
       filename: p.filename,
-      fileMissing: !this.fileOnDisk(p.filename),
+      fileMissing: !p.blob,
+      blobBytes: p.blob?.size ?? 0,
       createdAt: p.createdAt,
     }));
   }
@@ -93,15 +107,16 @@ export class PhotosService {
   async assertForSale(photoId: number): Promise<Photo> {
     const photo = await this.prisma.photo.findUnique({
       where: { id: photoId },
+      include: { blob: { select: { photoId: true } } },
     });
     if (!photo || !photo.published || !photo.forSale) {
       throw new BadRequestException(
         `Photo ${photoId} is not available for sale`,
       );
     }
-    if (!this.fileOnDisk(photo.filename)) {
+    if (!photo.blob && !this.fileOnDisk(photo.filename)) {
       throw new BadRequestException(
-        `Photo ${photoId} file is missing on the server — re-upload it in /admin`,
+        `Photo ${photoId} file is missing — re-upload it in /admin`,
       );
     }
     return photo;
@@ -110,9 +125,9 @@ export class PhotosService {
   async resolvePrintUrl(photoId: number): Promise<string | null> {
     const photo = await this.prisma.photo.findUnique({
       where: { id: photoId },
+      include: { blob: { select: { photoId: true } } },
     });
-    if (photo) {
-      if (!this.fileOnDisk(photo.filename)) return null;
+    if (photo && (photo.blob || this.fileOnDisk(photo.filename))) {
       return mediaUrl(photo.filename);
     }
 
@@ -147,6 +162,14 @@ export class PhotosService {
     const forSale = parseBool(body.forSale, true);
     const published = parseBool(body.published, true);
 
+    // Prefer buffer from multer memory; otherwise read the disk file multer wrote
+    let data: Buffer;
+    if (file.buffer?.length) {
+      data = file.buffer;
+    } else {
+      data = await readFile(join(uploadDir(), file.filename));
+    }
+
     const photo = await this.prisma.photo.create({
       data: {
         title,
@@ -161,6 +184,13 @@ export class PhotosService {
         mimeType: file.mimetype,
         forSale,
         published,
+        blob: {
+          create: {
+            data: new Uint8Array(data),
+            mimeType: file.mimetype,
+            size: data.length,
+          },
+        },
       },
     });
 

@@ -12,18 +12,15 @@ The API also serves the gallery UI from `server/public/` (`/`, `/admin/`, `/orde
 
 ---
 
-## Why photos disappear (important)
+## Why photos disappeared (and the fix)
 
-Upload files live on disk at `UPLOAD_DIR` (default `/data/uploads`). Postgres only stores metadata.
+Older deploys stored image **files on disk** only. Without a Railway volume, every redeploy wiped `/data/uploads`, so the gallery went empty.
 
-If Railway has **no volume** at that path, every redeploy wipes the image files. The gallery then looks empty (or shows broken images), even though `/photos` still lists DB rows.
+**Current behavior:** each upload also stores image bytes in Postgres (`PhotoBlob`). Media is served from disk cache when present, otherwise from the database — so redeploys no longer erase the gallery.
 
-**Fix:**
+After upgrading, open `/admin/`, delete any rows marked **file missing** (old uploads with no blob), and **re-upload once**. Those new uploads will stick.
 
-1. Railway service → **Volumes** → mount path `/data/uploads`
-2. Set `UPLOAD_DIR=/data/uploads`
-3. Open `https://YOUR-SERVICE.up.railway.app/admin/`
-4. Delete rows marked **file missing**, then **re-upload** each photo
+Optional: still mount a volume at `/data/uploads` as a local cache (`UPLOAD_DIR=/data/uploads`).
 
 ---
 

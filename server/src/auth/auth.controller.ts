@@ -1,5 +1,6 @@
 import { Body, Controller, Get, Post, Req, Res } from '@nestjs/common';
 import { Request, Response } from 'express';
+import { PhotosService } from '../photos/photos.service';
 import { AuthService } from './auth.service';
 import { LoginDto } from './login.dto';
 import { bearerFrom } from './request-auth';
@@ -64,12 +65,21 @@ export class AuthController {
 
 @Controller()
 export class HealthController {
+  constructor(private readonly photos: PhotosService) {}
+
   @Get('health')
-  health() {
+  async health() {
+    let media = null;
+    try {
+      media = await this.photos.mediaStats();
+    } catch {
+      media = { error: 'unavailable' };
+    }
     return {
       ok: true,
       service: 'ketchikanphotos-api',
       time: new Date().toISOString(),
+      media,
     };
   }
 }
