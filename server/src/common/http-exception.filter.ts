@@ -1,3 +1,9 @@
+/**
+ * Normalize all thrown errors to JSON:
+ *   { ok:false, statusCode, error, message }
+ * so the admin UI and gallery can display message strings consistently
+ * (including multer / validation failures).
+ */
 import {
   ArgumentsHost,
   Catch,

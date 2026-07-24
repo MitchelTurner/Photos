@@ -272,9 +272,28 @@
 
   <script>
     /*
-      Set this to your Railway API origin if you host /admin on the static site.
-      Prefer opening https://YOUR-API.up.railway.app/admin/ instead.
-      Override anytime with ?api=https://YOUR-API.up.railway.app
+      =========================================================================
+      ADMIN UI NOTES
+      =========================================================================
+      Prefer: https://phot-api.up.railway.app/admin/  (same host as the API)
+
+      Auth
+        POST /auth/login with ADMIN_EMAIL + ADMIN_PASSWORD (Railway vars).
+        Stores bearer token in sessionStorage as kp_session for cross-origin.
+        Cookie kp_session is used when admin is same-origin.
+
+      Uploads
+        Single  → POST /admin/photos     field name: file
+        Bulk    → POST /admin/photos/bulk field name: files (max 40)
+        Category / forSale / published are shared for bulk; titles come from
+        each filename. Bytes are stored in Postgres (PhotoBlob) so redeploys
+        do not wipe the gallery.
+
+      "file missing" in the list means that Photo row has NO PhotoBlob
+      (usually left over from before DB storage). Delete + re-upload.
+
+      API base override: ?api=https://… or the form field / localStorage kp_api.
+      =========================================================================
     */
     const CONFIG = {
       // Prefill your Railway API. Override with ?api=... or the form field.

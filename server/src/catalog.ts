@@ -1,16 +1,23 @@
 /**
- * Print catalog — the ONLY source of truth for prices and Prodigi SKUs.
+ * =============================================================================
+ * Print catalog — ONLY source of truth for prices and Prodigi SKUs
+ * =============================================================================
  *
- * The browser sends { photoId, title, sizeKey, qty }. It never sends a price.
- * The server looks the price up here, so a tampered client can't change what
- * they're charged. Keep the sizeKeys identical to PRINT_OPTIONS in index.html.
+ * Browser checkout payload: { photoId, sizeKey, qty }  — never a price.
+ * CheckoutService looks amount + sku up here so a tampered client cannot change
+ * what they're charged. Keep sizeKeys identical to PRINT_OPTIONS in index.html
+ * (and server/public/index.html).
  *
- * amount is in the smallest currency unit (US cents).
- * sku is the Prodigi product code for fulfillment after payment.
+ * amount  = US cents
+ * sku     = Prodigi product code used after Stripe payment succeeds
  *
- * SKU notes (verify in your Prodigi dashboard / GET /v4.0/products/{sku}):
- * - GLOBAL-FAP-*  = enhanced matte fine art paper
- * - GLOBAL-MET-*  = ChromaLuxe aluminium metal (typically US ship-from / US ship-to)
+ * Verify SKUs with: GET {PRODIGI_API_BASE}/products/{sku}
+ *   GLOBAL-FAP-*  enhanced matte fine art paper
+ *   GLOBAL-MET-*  ChromaLuxe aluminium metal (often US ship-from / US ship-to)
+ *
+ * Changing a price here affects NEW checkouts only — OrderItem rows freeze the
+ * amount/sku at session-create time.
+ * =============================================================================
  */
 export const CURRENCY = 'usd';
 

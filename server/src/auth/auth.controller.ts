@@ -1,3 +1,15 @@
+/**
+ * Auth + health HTTP routes.
+ *
+ *   POST /auth/login    → sets kp_session cookie + returns bearer token
+ *   POST /auth/logout   → clears cookie
+ *   GET  /auth/me       → current session (401 if missing/expired)
+ *   GET  /auth/status   → public diagnostics for the login form (email hint, etc.)
+ *   GET  /health        → liveness + media counts (total / published / withBlob)
+ *
+ * Use /health.media.withBlob when debugging an empty gallery. Zero blobs means
+ * re-upload is required; the UI will stay empty until then.
+ */
 import { Body, Controller, Get, Post, Req, Res } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { PhotosService } from '../photos/photos.service';

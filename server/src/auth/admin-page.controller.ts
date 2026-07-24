@@ -1,3 +1,10 @@
+/**
+ * Serves the admin HTML at /admin and /admin/ (not only via static middleware).
+ *
+ * Prefer opening https://<api-host>/admin/ so API calls are same-origin and
+ * cookies work without CORS. The page still lets you override the API base URL
+ * for cases where the HTML is hosted elsewhere (e.g. SiteGround).
+ */
 import { Controller, Get, Res } from '@nestjs/common';
 import { Response } from 'express';
 import { existsSync } from 'fs';

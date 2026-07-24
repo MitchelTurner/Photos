@@ -1,3 +1,29 @@
+/**
+ * =============================================================================
+ * PhotosService — gallery catalog + durable image storage
+ * =============================================================================
+ *
+ * DATA MODEL
+ *   Photo       metadata shown in the gallery (title, category, tones, …)
+ *   PhotoBlob   raw image bytes (BYTEA). Required for a photo to appear in
+ *               GET /photos. Survives Railway redeploys without a disk volume.
+ *
+ * PUBLIC SHAPE (PhotoPublic)
+ *   Matches what index.html expects: { id, cat, title, coord, cond, when, h,
+ *   tone:[a,b], src, forSale }. `src` is an absolute URL built from
+ *   PUBLIC_API_URL + /media/{filename}.
+ *
+ * EMPTY GALLERY CHECKLIST
+ *   1. GET /health → media.withBlob  (must be > 0)
+ *   2. GET /photos → non-empty array
+ *   3. GET /media/<filename> → 200 image/*
+ *   If withBlob is 0: delete orphan rows in /admin and re-upload.
+ *
+ * CHECKOUT / PRODIGI
+ *   assertForSale + resolvePrintUrl ensure a paid print has a reachable asset
+ *   URL. Prodigi downloads that URL after Stripe marks the order paid.
+ * =============================================================================
+ */
 import {
   BadRequestException,
   Injectable,
@@ -10,6 +36,7 @@ import { join } from 'path';
 import { PrismaService } from '../prisma/prisma.service';
 import { mediaUrl, uploadDir } from './upload.config';
 
+/** Duotone placeholder colors used under real photos while they fade in. */
 const TONES: [string, string][] = [
   ['#12333a', '#2a5a55'],
   ['#1c2e33', '#7d5a3c'],
@@ -71,6 +98,10 @@ export class PhotosService {
     };
   }
 
+  /**
+   * Public gallery feed. Only published photos that still have image bytes
+   * (PhotoBlob) are returned — metadata-only orphans stay hidden.
+   */
   async listPublished(): Promise<PhotoPublic[]> {
     const rows = await this.prisma.photo.findMany({
       where: {
@@ -137,6 +168,12 @@ export class PhotosService {
     return process.env.PRODIGI_FALLBACK_ASSET_URL || null;
   }
 
+  /**
+   * Single upload. Multer has already written `file` to UPLOAD_DIR; we also
+   * persist bytes into PhotoBlob in the same create() so the gallery survives
+   * the next deploy. Title falls back to a cleaned filename when omitted
+   * (important for bulk uploads).
+   */
   async createFromUpload(
     file: Express.Multer.File | undefined,
     body: {

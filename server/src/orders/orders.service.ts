@@ -1,3 +1,20 @@
+/**
+ * =============================================================================
+ * Order lifecycle after Checkout
+ * =============================================================================
+ *
+ * pending  → created in CheckoutService before Stripe redirect
+ * paid     → Stripe session payment_status=paid (webhook or status poll)
+ * fulfilling → Prodigi create-order in flight / about to run
+ * fulfilled  → prodigiOrderId stored
+ * failed     → Stripe or Prodigi error recorded in fulfillError
+ *
+ * recordPaid is idempotent: if prodigiOrderId already exists, retries no-op.
+ * Fulfillment errors after a successful charge do NOT fail the Stripe webhook
+ * response in a way that causes endless retries for unrecoverable asset issues
+ * — check Order.fulfillError in the database / logs.
+ * =============================================================================
+ */
 import { Injectable, Logger } from '@nestjs/common';
 import Stripe from 'stripe';
 import { PrismaService } from '../prisma/prisma.service';

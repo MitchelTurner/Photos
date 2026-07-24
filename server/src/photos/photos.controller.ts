@@ -1,3 +1,22 @@
+/**
+ * =============================================================================
+ * Photos HTTP routes
+ * =============================================================================
+ *
+ * Public
+ *   GET  /photos                 Gallery JSON (published + has PhotoBlob)
+ *
+ * Admin (AdminGuard — cookie kp_session or Authorization: Bearer <token>)
+ *   GET    /admin/photos         Full list; fileMissing=true when no blob
+ *   POST   /admin/photos         multipart field "file" + metadata fields
+ *   POST   /admin/photos/bulk    multipart field "files" (max 40) + shared meta
+ *   PATCH  /admin/photos/:id     title / category / forSale / published / …
+ *   DELETE /admin/photos/:id     removes Photo (+ cascade PhotoBlob) and disk file
+ *
+ * Multipart field names must match the admin UI FormData keys exactly.
+ * Bulk titles always come from each original filename (see PhotosService).
+ * =============================================================================
+ */
 import {
   Body,
   Controller,
@@ -39,14 +58,14 @@ export class PhotosController {
     return this.photos.listPublished();
   }
 
-  /** Admin: full list including unpublished */
+  /** Admin: full list including unpublished / blob-missing orphans */
   @Get('admin/photos')
   @UseGuards(AdminGuard)
   listAdmin() {
     return this.photos.listAllAdmin();
   }
 
-  /** Admin: upload a photo for sale / gallery */
+  /** Admin: upload one photo for sale / gallery */
   @Post('admin/photos')
   @UseGuards(AdminGuard)
   @UseInterceptors(FileInterceptor('file', photoMulterOptions))

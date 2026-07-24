@@ -1,3 +1,19 @@
+# =============================================================================
+# Railway API image (set Root Directory = server, builder = DOCKERFILE)
+# =============================================================================
+# Why Dockerfile instead of Nixpacks?
+#   A root nixpacks.toml that set nixPkgs=["openssl"] previously REPLACED Node
+#   with only OpenSSL, so `npm` was missing at build time. This image pins
+#   node:22 + openssl for Prisma engines.
+#
+# What gets copied:
+#   - Nest source → dist/
+#   - prisma/ (migrations run on start:prod)
+#   - public/ (gallery + admin HTML served by main.ts)
+#
+# UPLOAD_DIR=/data/uploads is a disk cache. Image bytes also live in Postgres
+# (PhotoBlob). A Railway volume at /data/uploads is optional but recommended.
+# =============================================================================
 FROM node:22-bookworm-slim
 
 # Prisma engines need OpenSSL

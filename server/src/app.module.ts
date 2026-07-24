@@ -1,3 +1,17 @@
+/**
+ * Root Nest module — wires controllers (HTTP routes) to providers (services).
+ *
+ * Request flow overview:
+ *   Browser gallery  → GET /photos → PhotosService.listPublished
+ *   Admin upload     → POST /admin/photos[ /bulk ] → PhotosService (+ PhotoBlob)
+ *   Image <img src>  → GET /media/:file → MediaController (disk | DB)
+ *   Cart checkout    → POST /checkout → CheckoutService → Stripe Checkout Session
+ *   Stripe pays      → POST /webhook/stripe → OrdersService.recordPaid → Prodigi
+ *   Admin sign-in    → POST /auth/login → AuthService (cookie + bearer token)
+ *
+ * HealthController is public and includes media counts so you can diagnose an
+ * empty gallery without logging in: GET /health → media.withBlob
+ */
 import { Module } from '@nestjs/common';
 import { AdminPageController } from './auth/admin-page.controller';
 import { AuthController, HealthController } from './auth/auth.controller';

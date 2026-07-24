@@ -1,3 +1,25 @@
+/**
+ * =============================================================================
+ * Stripe webhooks + order status
+ * =============================================================================
+ *
+ * Configure Stripe Dashboard (or CLI) to POST to:
+ *   https://<PUBLIC_API_URL>/webhook/stripe
+ * with events:
+ *   - checkout.session.completed
+ *   - checkout.session.async_payment_succeeded
+ *
+ * Signature verification needs the RAW body (see main.ts rawBody: true) and
+ * STRIPE_WEBHOOK_SECRET (whsec_…). Never reuse the secret key here.
+ *
+ * After a paid session, OrdersService copies shipping from Stripe, marks the
+ * order paid, and submits a Prodigi print job using each item's catalog SKU
+ * and the photo's public /media URL.
+ *
+ * GET /order/status?session_id=cs_… is a customer-facing status poll used by
+ * /order/success/ — it is idempotent with the webhook path.
+ * =============================================================================
+ */
 import {
   BadRequestException,
   Controller,

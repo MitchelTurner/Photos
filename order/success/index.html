@@ -88,8 +88,14 @@
     <a class="back" href="/">← Back to the gallery</a>
   </main>
   <script>
-    /* Point this at the same API host as CONFIG.checkoutEndpoint (without /checkout). */
-    const API_BASE = ""; // e.g. "https://api.ketchikanphotos.com" or "http://localhost:3000"
+    /*
+      Success page after Stripe Checkout.
+      Stripe redirects here with ?session_id=cs_...
+      We poll GET {API_BASE}/order/status which is idempotent with the webhook:
+      it confirms payment and kicks Prodigi if the webhook hasn't landed yet.
+      API_BASE must be the public Railway API origin (not SiteGround).
+    */
+    const API_BASE = "https://phot-api.up.railway.app";
 
     (function () {
       const params = new URLSearchParams(location.search);

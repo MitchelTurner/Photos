@@ -546,11 +546,32 @@
 
 <script>
 /* =========================================================================
-   PRINT ORDER + CHECKOUT CONFIG
+   KETCHIKAN PHOTOS — FRONTEND NOTES
    -------------------------------------------------------------------------
-   apiBase           = NestJS origin (gallery + /admin uploads)
-   checkoutEndpoint  = POST /checkout on that API. Leave "" for demo mode.
-   Upload sale photos at /admin/ (email + password login). Gallery loads GET /photos.
+   This page is the customer gallery + print cart. It is served from:
+     • Railway API  → https://phot-api.up.railway.app/   (authoritative / current)
+     • SiteGround   → https://ketchikanphotos.com        (must sync this file)
+
+   HOW PHOTOS APPEAR
+     1. Photographer uploads via /admin/ on the API host
+     2. API stores metadata (Photo) + bytes (PhotoBlob) in Postgres
+     3. bootGallery() below fetches GET {apiBase}/photos
+     4. Each row's `src` points at GET {apiBase}/media/{filename}
+     5. Cards render a duotone SVG placeholder, then fade in the real <img>
+
+   IF THE GALLERY IS EMPTY
+     • Confirm you are on the Railway URL (or a SiteGround copy that includes
+       bootGallery / apiBase — NOT the old hardcoded `const PHOTOS = [` demo)
+     • GET /health → media.withBlob must be > 0
+     • Re-upload in /admin if blobs were lost before DB persistence shipped
+
+   CONFIG
+     apiBase            Nest origin for GET /photos ("" = same origin)
+     checkoutEndpoint   POST /checkout ("" disables live checkout)
+     licenseEmail       mailto link in the lightbox
+
+   PRICES in PRINT_OPTIONS are display-only. The server re-prices from
+   server/src/catalog.ts — never trust client-submitted amounts.
    ========================================================================= */
 /* Same-origin when this page is served by the API (Railway); full URL for SiteGround. */
 const ON_API_HOST = /up\.railway\.app$|localhost|127\.0\.0\.1/.test(location.hostname);
@@ -560,7 +581,7 @@ const CONFIG = {
   licenseEmail: "hello@ketchikanphotos.com",
 };
 
-/* Gallery shows only published photos uploaded via /admin (GET /photos). */
+/* Filled by bootGallery() from GET /photos — never hardcode sale images here. */
 let PHOTOS = [];
 
 /* Print sizes — display only. Prices in cents. The SERVER re-derives every
@@ -843,7 +864,7 @@ document.querySelectorAll('.cta-row .btn').forEach(b=>{
 
 document.getElementById('yr').textContent=new Date().getFullYear();
 
-/* Load published photos from the API only (uploaded via /admin). */
+/* Load published photos from the API only (uploaded via /admin + PhotoBlob). */
 async function bootGallery(){
   const fallback = (CONFIG.checkoutEndpoint||"").replace(/\/checkout\/?$/,"");
   const base = String(CONFIG.apiBase != null ? CONFIG.apiBase : fallback).replace(/\/$/,"");

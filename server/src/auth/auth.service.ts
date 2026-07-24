@@ -1,3 +1,23 @@
+/**
+ * =============================================================================
+ * Admin authentication
+ * =============================================================================
+ *
+ * Credentials (Railway Variables — no surrounding quotes):
+ *   ADMIN_EMAIL              required login identity (compared case-insensitive)
+ *   ADMIN_PASSWORD           preferred plaintext password
+ *   ADMIN_PASSWORD_HASH      bcrypt hash — ONLY used if ADMIN_PASSWORD is unset
+ *   ADMIN_TOKEN              legacy: accepted as password when email matches
+ *   ADMIN_SESSION_SECRET     HMAC key for signed session tokens
+ *
+ * IMPORTANT: If both ADMIN_PASSWORD and ADMIN_PASSWORD_HASH are set, the plain
+ * ADMIN_PASSWORD wins. Stale hashes on Railway were a common "invalid password"
+ * cause — delete the hash variable when rotating to a plain password.
+ *
+ * Sessions: signed HMAC token in cookie `kp_session` AND returned as `token`
+ * in the login JSON so cross-origin admin UIs can send Authorization: Bearer.
+ * =============================================================================
+ */
 import {
   HttpException,
   HttpStatus,

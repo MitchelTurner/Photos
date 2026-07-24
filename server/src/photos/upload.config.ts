@@ -1,8 +1,29 @@
+/**
+ * =============================================================================
+ * Upload / media URL helpers
+ * =============================================================================
+ *
+ * Multer writes each admin upload to UPLOAD_DIR as:
+ *   {timestamp}-{randomHex}.jpg|png|webp
+ *
+ * That disk path is a CACHE. PhotosService also stores the same bytes in
+ * Postgres (PhotoBlob) so Railway redeploys without a volume do not erase the
+ * gallery. MediaController serves disk first, then falls back to the blob.
+ *
+ * PUBLIC_API_URL must be the public HTTPS origin of this API (e.g.
+ * https://phot-api.up.railway.app). Gallery JSON embeds absolute media URLs
+ * built from that origin — wrong PUBLIC_API_URL = broken <img> tags for
+ * cross-origin hosts (SiteGround).
+ *
+ * Limits: 40 MB per file (print-ready). Allowed types: JPEG, PNG, WebP.
+ * =============================================================================
+ */
 import { existsSync, mkdirSync } from 'fs';
 import { diskStorage } from 'multer';
 import { extname, join } from 'path';
 import { randomBytes } from 'crypto';
 
+/** Local directory for uploaded files (optional Railway volume). */
 export function uploadDir(): string {
   const dir =
     process.env.UPLOAD_DIR || join(process.cwd(), 'uploads');
@@ -12,6 +33,7 @@ export function uploadDir(): string {
   return dir;
 }
 
+/** Public origin used when building absolute /media/... URLs for the gallery. */
 export function publicApiUrl(): string {
   return (
     process.env.PUBLIC_API_URL?.replace(/\/$/, '') ||
@@ -40,6 +62,7 @@ export const photoMulterOptions = {
           ? '.jpg'
           : ext
         : '.jpg';
+      // Opaque name — never trust the client's original filename on disk.
       cb(null, `${Date.now()}-${randomBytes(6).toString('hex')}${safe}`);
     },
   }),

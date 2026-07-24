@@ -1,3 +1,23 @@
+/**
+ * =============================================================================
+ * GET /media/:filename
+ * =============================================================================
+ *
+ * How gallery images are loaded in the browser:
+ *   GET /photos  →  { src: "https://…/media/1784….jpg", … }
+ *   <img src>    →  this controller (or express static under the same prefix)
+ *
+ * Lookup order:
+ *   1. File on disk at UPLOAD_DIR/:filename  (fast path / cache)
+ *   2. Photo row by unique filename + PhotoBlob.data  (durable source of truth)
+ *   3. 404 — tell the operator to re-upload in /admin
+ *
+ * When serving from the DB we also try to rewrite the file onto disk so later
+ * requests and Prodigi fetches hit the cache. That write is best-effort.
+ *
+ * Security: filename is restricted to [a-zA-Z0-9._-] to block path traversal.
+ * =============================================================================
+ */
 import {
   Controller,
   Get,
@@ -17,7 +37,7 @@ export class MediaController {
 
   @Get(':filename')
   async file(@Param('filename') filename: string, @Res() res: Response) {
-    // Prevent path traversal
+    // Prevent path traversal (e.g. ../../etc/passwd)
     const safe = filename.replace(/[^a-zA-Z0-9._-]/g, '');
     if (!safe || safe !== filename) {
       throw new NotFoundException('Invalid media filename');

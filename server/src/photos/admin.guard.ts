@@ -1,3 +1,12 @@
+/**
+ * Protects /admin/photos* routes.
+ *
+ * Accepts either:
+ *   - Cookie `kp_session` (same-origin admin on Railway), or
+ *   - `Authorization: Bearer <token>` (cross-origin admin; token from /auth/login)
+ *
+ * Both are issued by AuthService after email/password verification.
+ */
 import {
   CanActivate,
   ExecutionContext,

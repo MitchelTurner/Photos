@@ -1,3 +1,23 @@
+// =============================================================================
+// Prisma schema — Ketchikan Photos
+// =============================================================================
+//
+// DATABASE_URL must point at Railway Postgres (or local). Migrations run on
+// every boot via `prisma migrate deploy` in package.json start scripts.
+//
+// PHOTO STORAGE
+//   Photo       = gallery / print catalog row (what the UI lists)
+//   PhotoBlob   = image bytes. Without a blob, the photo is HIDDEN from
+//                 GET /photos even if published=true. This is intentional:
+//                 old rows whose disk files were wiped by redeploys would
+//                 otherwise show broken images.
+//
+// ORDERS
+//   Created as status=pending in CheckoutService, then advanced by the Stripe
+//   webhook (paid → fulfilling → fulfilled | failed). Prodigi IDs live on Order.
+//   Amounts are always US cents; SKUs come from server/src/catalog.ts.
+// =============================================================================
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -30,8 +50,10 @@ model Order {
   shippingState   String?
   shippingPostal  String?
   shippingCountry String?
+  /// Set after a successful Prodigi create-order call
   prodigiOrderId  String?
   prodigiStatus   String?
+  /// Last fulfillment error (kept so Stripe webhooks can return 200 without looping)
   fulfillError    String?
   items           OrderItem[]
   createdAt       DateTime    @default(now())
@@ -44,9 +66,12 @@ model OrderItem {
   order    Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
   photoId  Int
   title    String
+  /// Must match a key in server/src/catalog.ts (e.g. "8x12")
   sizeKey  String
   quantity Int
+  /// Unit amount in cents (copied from catalog at checkout time)
   amount   Int
+  /// Prodigi SKU copied from catalog at checkout time
   sku      String
 }
 
@@ -58,9 +83,11 @@ model Photo {
   coord       String     @default("")
   cond        String     @default("")
   whenShot    String     @default("")
+  /// Masonry height factor used by the gallery CSS (not the print aspect ratio)
   aspectRatio Float      @default(1.25)
   toneA       String     @default("#12333a")
   toneB       String     @default("#2a5a55")
+  /// Opaque multer filename; also the /media/:filename key
   filename    String     @unique
   mimeType    String
   forSale     Boolean    @default(true)
@@ -73,10 +100,10 @@ model Photo {
 }
 
 model PhotoBlob {
-  photoId  Int    @id
-  photo    Photo  @relation(fields: [photoId], references: [id], onDelete: Cascade)
-  data     Bytes
-  mimeType String
-  size     Int
+  photoId   Int      @id
+  photo     Photo    @relation(fields: [photoId], references: [id], onDelete: Cascade)
+  data      Bytes
+  mimeType  String
+  size      Int
   createdAt DateTime @default(now())
 }

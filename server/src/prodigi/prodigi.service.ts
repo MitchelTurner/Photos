@@ -1,3 +1,23 @@
+/**
+ * =============================================================================
+ * Prodigi print fulfillment
+ * =============================================================================
+ *
+ * Called after Stripe reports a paid Checkout Session. For each OrderItem we:
+ *   - resolve a publicly reachable image URL (PhotosService.resolvePrintUrl)
+ *   - submit sku + copies + asset URL to Prodigi Orders API
+ *
+ * Env:
+ *   PRODIGI_API_KEY           required
+ *   PRODIGI_API_BASE          default sandbox https://api.sandbox.prodigi.com/v4.0
+ *   PRODIGI_SHIPPING_METHOD   default Standard
+ *   PRODIGI_FALLBACK_ASSET_URL  last-resort image if a photo has no media
+ *
+ * Print asset URLs must be fetchable by Prodigi's servers — use the public
+ * Railway /media/... URLs, not localhost. If media was wiped and has no
+ * PhotoBlob, fulfillment fails with a clear error on the Order row.
+ * =============================================================================
+ */
 import { Injectable, Logger } from '@nestjs/common';
 import { Order, OrderItem } from '@prisma/client';
 import { PhotosService } from '../photos/photos.service';

@@ -1,3 +1,25 @@
+/**
+ * =============================================================================
+ * Stripe Checkout session creation
+ * =============================================================================
+ *
+ * Browser sends: { items: [{ photoId, sizeKey, qty }] }  — NEVER a price.
+ * Server looks up amount + Prodigi SKU from catalog.ts and verifies the photo
+ * is published + forSale + has media (assertForSale).
+ *
+ * Flow:
+ *   1. Create local Order (pending) + OrderItems with frozen amount/sku
+ *   2. Create Stripe Checkout Session (success/cancel URLs use SITE_URL)
+ *   3. Store stripeSessionId on the Order
+ *   4. Return { url } — browser redirects the customer to Stripe
+ *
+ * Payment confirmation happens in WebhookController → OrdersService.recordPaid.
+ * Do not mark orders paid from the success page alone.
+ *
+ * SITE_URL must be the public site origin customers return to after pay
+ * (Railway gallery URL or the custom domain once it serves the new index.html).
+ * =============================================================================
+ */
 import { BadRequestException, Injectable } from '@nestjs/common';
 import Stripe from 'stripe';
 import { CATALOG, CURRENCY, isSizeKey } from '../catalog';
