@@ -19,11 +19,11 @@ import { Injectable, Logger } from '@nestjs/common';
 import Stripe from 'stripe';
 import { PrismaService } from '../prisma/prisma.service';
 import { ProdigiService } from '../prodigi/prodigi.service';
+import { getStripe } from '../stripe/stripe-config';
 
 @Injectable()
 export class OrdersService {
   private readonly logger = new Logger(OrdersService.name);
-  private readonly stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
 
   constructor(
     private readonly prisma: PrismaService,
@@ -36,7 +36,7 @@ export class OrdersService {
    * success page so the customer isn't stuck waiting on webhook delivery.
    */
   async fulfillCheckout(sessionId: string): Promise<{ orderId: string; status: string }> {
-    const session = await this.stripe.checkout.sessions.retrieve(sessionId);
+    const session = await getStripe().checkout.sessions.retrieve(sessionId);
 
     if (session.payment_status !== 'paid') {
       return { orderId: session.metadata?.orderId || '', status: 'unpaid' };

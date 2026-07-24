@@ -34,11 +34,10 @@ import {
 import { Request } from 'express';
 import Stripe from 'stripe';
 import { OrdersService } from '../orders/orders.service';
+import { getStripe } from '../stripe/stripe-config';
 
 @Controller()
 export class WebhookController {
-  private readonly stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
-
   constructor(private readonly orders: OrdersService) {}
 
   /**
@@ -57,7 +56,7 @@ export class WebhookController {
 
     let event: Stripe.Event;
     try {
-      event = this.stripe.webhooks.constructEvent(
+      event = getStripe().webhooks.constructEvent(
         req.rawBody as Buffer,
         signature,
         process.env.STRIPE_WEBHOOK_SECRET,

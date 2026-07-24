@@ -25,8 +25,12 @@ import Stripe from 'stripe';
 import { CATALOG, CURRENCY, isSizeKey } from '../catalog';
 import { PhotosService } from '../photos/photos.service';
 import { PrismaService } from '../prisma/prisma.service';
+import {
+  assertStripeSecretConfigured,
+  getStripe,
+  mapStripeError,
+} from '../stripe/stripe-config';
 import { CheckoutDto } from './dto';
-
 
 function resolveSiteOrigin(): string {
   const site = (process.env.SITE_URL || '').replace(/\/$/, '');
@@ -40,17 +44,13 @@ function resolveSiteOrigin(): string {
 
 @Injectable()
 export class CheckoutService {
-  private readonly stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
-
   constructor(
     private readonly prisma: PrismaService,
     private readonly photos: PhotosService,
   ) {}
 
   async createSession(dto: CheckoutDto): Promise<{ url: string }> {
-    if (!process.env.STRIPE_SECRET_KEY) {
-      throw new BadRequestException('STRIPE_SECRET_KEY is not configured');
-    }
+    assertStripeSecretConfigured();
     const siteOrigin = resolveSiteOrigin();
     if (!siteOrigin) {
       throw new BadRequestException(
@@ -112,7 +112,7 @@ export class CheckoutService {
       }));
 
     try {
-      const session = await this.stripe.checkout.sessions.create({
+      const session = await getStripe().checkout.sessions.create({
         mode: 'payment',
         line_items,
         client_reference_id: order.id,
@@ -137,14 +137,16 @@ export class CheckoutService {
 
       return { url: session.url };
     } catch (err) {
+      const message =
+        err instanceof Error ? err.message : 'Stripe session create failed';
       await this.prisma.order.update({
         where: { id: order.id },
         data: {
           status: 'failed',
-          fulfillError: `Stripe session create failed: ${(err as Error).message}`,
+          fulfillError: `Stripe session create failed: ${message}`,
         },
       });
-      throw err;
+      mapStripeError(err);
     }
   }
 }

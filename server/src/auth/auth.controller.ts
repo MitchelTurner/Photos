@@ -13,6 +13,7 @@
 import { Body, Controller, Get, Post, Req, Res } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { PhotosService } from '../photos/photos.service';
+import { stripeSecretKey } from '../stripe/stripe-config';
 import { AuthService } from './auth.service';
 import { LoginDto } from './login.dto';
 import { bearerFrom } from './request-auth';
@@ -87,11 +88,23 @@ export class HealthController {
     } catch {
       media = { error: 'unavailable' };
     }
+    const key = stripeSecretKey();
+    const stripeKeyType = !key
+      ? 'missing'
+      : key.startsWith('sk_')
+        ? 'secret'
+        : key.startsWith('pk_')
+          ? 'publishable'
+          : 'invalid';
     return {
       ok: true,
       service: 'ketchikanphotos-api',
       time: new Date().toISOString(),
       media,
+      stripe: {
+        configured: stripeKeyType === 'secret',
+        keyType: stripeKeyType,
+      },
     };
   }
 }

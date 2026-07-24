@@ -42,8 +42,8 @@ Optional: still mount a volume at `/data/uploads` as a local cache (`UPLOAD_DIR=
 | `PUBLIC_API_URL` | `https://phot-api.up.railway.app` |
 | `CORS_ORIGINS` | Extra static origins, comma-separated |
 | `CORS_ALLOW_ANY` | `true` while testing admin from any host (optional) |
-| `STRIPE_SECRET_KEY` | Stripe secret |
-| `STRIPE_WEBHOOK_SECRET` | Webhook signing secret |
+| `STRIPE_SECRET_KEY` | **Secret** key only (`sk_test_…` / `sk_live_…`). A publishable `pk_…` key will break checkout. |
+| `STRIPE_WEBHOOK_SECRET` | Webhook signing secret (`whsec_…`) |
 | `PRODIGI_API_KEY` | Prodigi key |
 | `PRODIGI_API_BASE` | Sandbox or live API base |
 | `PRODIGI_SHIPPING_METHOD` | `Standard` |
