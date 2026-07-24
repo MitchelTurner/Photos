@@ -62,16 +62,29 @@ If Railway has **no volume** at that path, every redeploy wipes the image files.
 - Admin: `https://YOUR-SERVICE.up.railway.app/admin/`
 - Stripe webhook: `https://YOUR-SERVICE.up.railway.app/webhook/stripe`
 
-## 4. Static site (SiteGround)
+## 4. Your photos are on Railway — not old SiteGround HTML
 
-Until SiteGround syncs the latest `index.html` from GitHub, use the Railway URL above for the live gallery.
+**Working gallery right now:** `https://phot-api.up.railway.app/`
 
-When hosting static files separately, set:
+`https://ketchikanphotos.com` is still serving an **old** SiteGround `index.html` with
+hardcoded placeholder frames (`src: ""`) and **no** call to `GET /photos`. Uploading in
+`/admin` cannot fix that domain until the file is replaced or DNS points at Railway.
 
-```js
-apiBase: "https://YOUR-SERVICE.up.railway.app",
-checkoutEndpoint: "https://YOUR-SERVICE.up.railway.app/checkout",
-```
+### Option A — Point the domain at Railway (recommended)
+
+1. Railway service → **Settings → Networking → Custom Domain** → add `ketchikanphotos.com` and `www`
+2. At your DNS host, set the records Railway shows (usually CNAME or ALIAS to `*.up.railway.app`)
+3. Set `SITE_URL=https://ketchikanphotos.com` on Railway
+
+### Option B — Replace SiteGround’s `index.html`
+
+1. Download `index.html` from GitHub `main` (repo root)
+2. SiteGround → **Site Tools → File Manager** → `public_html`
+3. Replace `index.html` (and ideally `admin/`, `order/` too)
+4. Hard-refresh the browser (`Cmd+Shift+R`)
+
+Confirm the live file contains `bootGallery` and `apiBase` — if you still see
+`const PHOTOS = [` with empty `src:""`, SiteGround was not updated.
 
 ## Why not Nixpacks alone?
 
