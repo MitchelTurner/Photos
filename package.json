@@ -1,0 +1,13 @@
+{
+  "name": "ketchikanphotos",
+  "private": true,
+  "description": "Root package so Railway/Nixpacks detects Node (not static nginx)",
+  "scripts": {
+    "build": "npm ci --prefix server && npm run build --prefix server",
+    "start": "npm run start:prod --prefix server",
+    "start:prod": "npm run start:prod --prefix server"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

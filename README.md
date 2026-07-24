@@ -124,7 +124,8 @@ Keep these in sync:
 Step-by-step: see **[RAILWAY.md](./RAILWAY.md)**.
 
 Summary:
-- Root Directory = `server` · config = `/server/railway.toml`
+- Root Directory = `/` (repo root) — forces Node via root `package.json`
+  (or `server` + `/server/railway.toml`)
 - Add Postgres + volume at `/data/uploads`
 - Start runs `prisma migrate deploy` then the Nest API
 - Health: `GET /health` · Admin: `/admin/`

@@ -1,95 +1,91 @@
 # Deploy the API on Railway
 
+## Quick fix if the build fails with `npm: command not found`
+
+Nixpacks was detecting `index.html` and installing **nginx** instead of Node.
+This repo now has a root `package.json` + `nixpacks.toml` so Node is forced.
+
+**Recommended service settings**
+- **Root Directory:** `/` (repo root) — simplest with current config  
+  **or** `server` if you point Config File to `/server/railway.toml`
+- Do **not** leave a custom build that assumes nginx
+
+Redeploy after pulling `main`.
+
+---
+
 ## 1. Create the project
 
 1. Go to [railway.app](https://railway.app) → **New Project**
 2. **Deploy from GitHub repo** → `MitchelTurner/Photos` (branch `main`)
-3. After the service appears, open **Settings**:
-   - **Root Directory:** `server`
-   - **Config-as-code path:** `/server/railway.toml` (optional if Root Directory is `server`)
-4. **Add Postgres:** project canvas → **+ Create** → **Database** → **PostgreSQL**  
-   Railway injects `DATABASE_URL` into the API service (use **Variable Reference** / connect if needed).
+3. Service **Settings**:
+   - **Root Directory:** leave `/` (or set `server` + config `/server/railway.toml`)
+4. **Add Postgres:** **+ Create** → **Database** → **PostgreSQL**  
+   Connect it so `DATABASE_URL` is available on the API service.
 
 ## 2. Volume for uploads
 
-1. Open the API service → **Settings** → **Volumes**
+1. API service → **Settings** → **Volumes**
 2. Mount path: `/data/uploads`
-3. Keep `UPLOAD_DIR=/data/uploads` in variables (below)
+3. Set `UPLOAD_DIR=/data/uploads`
 
 ## 3. Environment variables
-
-In the API service → **Variables**, set:
 
 | Variable | Example / notes |
 |----------|-----------------|
 | `DATABASE_URL` | From Postgres plugin (auto) |
 | `PORT` | Leave unset — Railway sets it |
-| `SITE_URL` | `https://your-static-site.com` (SiteGround origin, no trailing slash) |
-| `PUBLIC_API_URL` | `https://YOUR-SERVICE.up.railway.app` (set after first deploy + domain) |
-| `CORS_ORIGINS` | Optional extra origins, comma-separated |
+| `SITE_URL` | `https://your-static-site.com` |
+| `PUBLIC_API_URL` | `https://YOUR-SERVICE.up.railway.app` |
+| `CORS_ORIGINS` | Optional extras, comma-separated |
 | `STRIPE_SECRET_KEY` | `sk_test_…` or `sk_live_…` |
-| `STRIPE_WEBHOOK_SECRET` | `whsec_…` (after webhook is created) |
-| `PRODIGI_API_KEY` | From Prodigi dashboard |
-| `PRODIGI_API_BASE` | Sandbox: `https://api.sandbox.prodigi.com/v4.0` · Live: `https://api.prodigi.com/v4.0` |
+| `STRIPE_WEBHOOK_SECRET` | `whsec_…` |
+| `PRODIGI_API_KEY` | From Prodigi |
+| `PRODIGI_API_BASE` | `https://api.sandbox.prodigi.com/v4.0` or live |
 | `PRODIGI_SHIPPING_METHOD` | `Standard` |
-| `PRODIGI_FALLBACK_ASSET_URL` | Optional sandbox image URL |
 | `UPLOAD_DIR` | `/data/uploads` |
-| `ADMIN_EMAIL` | Your login email |
+| `ADMIN_EMAIL` | Login email |
 | `ADMIN_PASSWORD` | Strong password |
-| `ADMIN_SESSION_SECRET` | Long random string (`openssl rand -hex 32`) |
-
-Generate a session secret locally:
-
-```bash
-openssl rand -hex 32
-```
+| `ADMIN_SESSION_SECRET` | `openssl rand -hex 32` |
 
 ## 4. Public URL
 
-1. API service → **Settings** → **Networking** → **Generate Domain**
-2. Copy it into `PUBLIC_API_URL` (and redeploy if needed)
-3. Health check: open `https://YOUR-SERVICE.up.railway.app/health` → `{ "ok": true, ... }`
+1. **Settings → Networking → Generate Domain**
+2. Set `PUBLIC_API_URL` to that HTTPS origin
+3. Check `https://YOUR-SERVICE.up.railway.app/health`
 4. Admin: `https://YOUR-SERVICE.up.railway.app/admin/`
 
 ## 5. Stripe webhook
 
-1. [Stripe Dashboard → Webhooks](https://dashboard.stripe.com/webhooks) → **Add endpoint**
-2. URL: `https://YOUR-SERVICE.up.railway.app/webhook/stripe`
-3. Events: `checkout.session.completed`, `checkout.session.async_payment_succeeded`
-4. Copy the signing secret → Railway `STRIPE_WEBHOOK_SECRET`
+- URL: `https://YOUR-SERVICE.up.railway.app/webhook/stripe`
+- Events: `checkout.session.completed`, `checkout.session.async_payment_succeeded`
 
 ## 6. Point the static site at the API
 
-In `index.html`:
-
 ```js
-const CONFIG = {
-  apiBase: "https://YOUR-SERVICE.up.railway.app",
-  checkoutEndpoint: "https://YOUR-SERVICE.up.railway.app/checkout",
-  licenseEmail: "hello@ketchikanphotos.com",
-};
+// index.html
+apiBase: "https://YOUR-SERVICE.up.railway.app",
+checkoutEndpoint: "https://YOUR-SERVICE.up.railway.app/checkout",
 ```
 
-In `order/success/index.html`:
-
 ```js
+// order/success/index.html
 const API_BASE = "https://YOUR-SERVICE.up.railway.app";
 ```
 
-## Build / start (already in repo)
+## Build / start
 
-- **Build:** `npm ci && npm run build` (generates Prisma client + Nest build)
-- **Start:** `npm run start:prod` → runs `prisma migrate deploy` then `node dist/main.js`
-- **Health:** `GET /health`
+- Build: `npm run build` → installs + builds `server/`
+- Start: `npm run start:prod` → Prisma migrate + Nest
+- Health: `GET /health`
 
 ## Checklist
 
-- [ ] Root Directory = `server`
-- [ ] Postgres attached (`DATABASE_URL`)
+- [ ] Deploy succeeds (Node, not nginx)
+- [ ] Postgres attached
 - [ ] Volume at `/data/uploads`
-- [ ] All env vars set
-- [ ] Domain generated → `PUBLIC_API_URL`
-- [ ] `/health` returns ok
+- [ ] Env vars set
+- [ ] `/health` ok
 - [ ] `/admin/` login works
-- [ ] Stripe webhook pointing at `/webhook/stripe`
-- [ ] Static site `CONFIG.apiBase` / `checkoutEndpoint` updated
+- [ ] Stripe webhook configured
+- [ ] Static site `CONFIG` updated
