@@ -1,0 +1,3 @@
+# Prisma needs OpenSSL at runtime on Railway images
+[phases.setup]
+nixPkgs = ["nodejs_22", "openssl"]
