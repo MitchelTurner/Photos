@@ -1,19 +1,10 @@
-<<<<<<< HEAD
-# Monorepo: Root Directory is set to /server so Nixpacks can detect
-# Node.js correctly during the build image phase.
-rootDirectory = "/server"
-
-[build]
-builder = "NIXPACKS"
-buildCommand = "npm ci && npm run build"
-=======
-# Works with Root Directory = "/" (repo root).
-# Prefer Root Directory = "server" + /server/railway.toml when possible.
+# Deploy from repo root. Root package.json + nixpacks.toml force Node
+# (otherwise index.html makes Nixpacks install nginx and npm fails).
+# Dashboard: leave Root Directory empty / "/".
 
 [build]
 builder = "NIXPACKS"
 buildCommand = "npm run build"
->>>>>>> c67b03d (Fix Railway Nixpacks detecting nginx instead of Node)
 
 [deploy]
 startCommand = "npm run start:prod"
