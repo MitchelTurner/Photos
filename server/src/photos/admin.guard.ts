@@ -5,28 +5,27 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { Request } from 'express';
+import { AuthService } from '../auth/auth.service';
+import { bearerFrom } from '../auth/request-auth';
 
 @Injectable()
 export class AdminGuard implements CanActivate {
+  constructor(private readonly auth: AuthService) {}
+
   canActivate(context: ExecutionContext): boolean {
-    const expected = process.env.ADMIN_TOKEN;
-    if (!expected) {
-      throw new UnauthorizedException(
-        'ADMIN_TOKEN is not configured on the server',
-      );
-    }
-
     const req = context.switchToHttp().getRequest<Request>();
-    const header = req.headers.authorization || '';
-    const bearer = header.startsWith('Bearer ')
-      ? header.slice(7).trim()
-      : '';
-    const alt = (req.headers['x-admin-token'] as string | undefined) || '';
-    const token = bearer || alt;
-
-    if (!token || token !== expected) {
-      throw new UnauthorizedException('Invalid admin token');
+    try {
+      const session = this.auth.authenticateRequest({
+        cookieToken: req.cookies?.[this.auth.cookieName()],
+        bearer: bearerFrom(req),
+      });
+      (req as Request & { admin?: { email: string } }).admin = {
+        email: session.email,
+      };
+      return true;
+    } catch (err) {
+      if (err instanceof UnauthorizedException) throw err;
+      throw new UnauthorizedException('Not signed in');
     }
-    return true;
   }
 }

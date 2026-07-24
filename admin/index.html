@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Upload photos — Ketchikan Photos</title>
+  <title>Admin — Ketchikan Photos</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Space+Mono:wght@400;700&family=Source+Sans+3:wght@400;600&display=swap" rel="stylesheet" />
@@ -41,7 +41,17 @@
       letter-spacing: .08em;
       text-transform: uppercase;
       color: var(--salmon);
-      margin: 0 0 2rem;
+      margin: 0 0 1.25rem;
+    }
+    .topbar {
+      display: flex; justify-content: space-between; align-items: baseline;
+      gap: 1rem; flex-wrap: wrap; margin-bottom: 1.5rem;
+    }
+    .who {
+      font-family: "Space Mono", monospace;
+      font-size: .68rem;
+      letter-spacing: .04em;
+      color: #3a4d52;
     }
     h2 {
       font-family: "Fraunces", Georgia, serif;
@@ -65,7 +75,7 @@
       margin: 0 0 .35rem;
       color: #3a4d52;
     }
-    input[type="text"], input[type="password"], input[type="number"], select, textarea {
+    input[type="text"], input[type="password"], input[type="email"], input[type="number"], input[type="url"] {
       width: 100%;
       border: 1px solid var(--line);
       border-radius: 4px;
@@ -78,8 +88,11 @@
     .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; }
     @media (max-width: 640px) { .row2 { grid-template-columns: 1fr; } }
     .checks { display: flex; gap: 1.25rem; margin: .2rem 0 1rem; flex-wrap: wrap; }
-    .checks label { display: flex; align-items: center; gap: .4rem; text-transform: none; font-family: inherit; font-size: .95rem; letter-spacing: 0; margin: 0; }
-    button, .btn {
+    .checks label {
+      display: flex; align-items: center; gap: .4rem;
+      text-transform: none; font-family: inherit; font-size: .95rem; letter-spacing: 0; margin: 0;
+    }
+    button {
       font-family: "Space Mono", monospace;
       font-size: .75rem;
       letter-spacing: .06em;
@@ -136,33 +149,57 @@
     .empty { color: #4a5c61; }
     .hint { font-size: .9rem; color: #3a4d52; margin: 0 0 1rem; line-height: 1.45; }
     a.home { color: var(--sea); font-size: .9rem; }
+    details.advanced { margin-top: .5rem; }
+    details.advanced summary {
+      cursor: pointer;
+      font-family: "Space Mono", monospace;
+      font-size: .68rem;
+      letter-spacing: .05em;
+      text-transform: uppercase;
+      color: #4a5c61;
+      margin-bottom: .75rem;
+    }
   </style>
 </head>
 <body>
   <div class="wrap">
-    <p class="brand">Ketchikan.Photos</p>
-    <p class="sub">Admin · upload photos for sale</p>
-    <p><a class="home" href="/">← Gallery</a></p>
+    <div class="topbar">
+      <div>
+        <p class="brand">Ketchikan.Photos</p>
+        <p class="sub">Admin · photos for sale</p>
+      </div>
+      <div>
+        <a class="home" href="/">← Gallery</a>
+        <div class="who" id="who" hidden></div>
+      </div>
+    </div>
 
     <section class="panel gate" id="gate">
       <h2>Sign in</h2>
-      <p class="hint">Enter the <code>ADMIN_TOKEN</code> from your Railway / server env.</p>
-      <label for="token">Admin token</label>
-      <input id="token" type="password" autocomplete="current-password" placeholder="ADMIN_TOKEN" />
-      <label for="apiBase">API base URL</label>
-      <input id="apiBase" type="text" placeholder="https://your-api.up.railway.app" />
-      <button type="button" id="unlock">Unlock admin</button>
-      <p class="msg" id="gateMsg"></p>
+      <p class="hint">Use the admin email and password from your Railway env (<code>ADMIN_EMAIL</code> / <code>ADMIN_PASSWORD</code>).</p>
+      <form id="loginForm">
+        <label for="email">Email</label>
+        <input id="email" name="email" type="email" autocomplete="username" required placeholder="you@example.com" />
+        <label for="password">Password</label>
+        <input id="password" name="password" type="password" autocomplete="current-password" required />
+        <details class="advanced">
+          <summary>API settings</summary>
+          <label for="apiBase">API base URL</label>
+          <input id="apiBase" type="url" placeholder="https://your-api.up.railway.app" />
+          <p class="hint" style="margin-top:-.25rem">Leave blank when this page is served from the API (<code>/admin/</code>).</p>
+        </details>
+        <button type="submit" id="loginBtn">Sign in</button>
+        <p class="msg" id="gateMsg"></p>
+      </form>
     </section>
 
     <div id="app" hidden>
       <section class="panel">
         <h2>Upload a photograph</h2>
-        <p class="hint">Use a print-ready JPEG/PNG (ideally 300 DPI for the largest size you sell). The same file is shown in the gallery and sent to Prodigi after checkout.</p>
+        <p class="hint">Print-ready JPEG/PNG/WebP (ideally 300 DPI). The same file is used in the gallery and sent to Prodigi after checkout.</p>
         <form id="uploadForm">
           <label for="file">Image file</label>
           <input id="file" name="file" type="file" accept="image/jpeg,image/png,image/webp" required />
-
           <div class="row2">
             <div>
               <label for="title">Title</label>
@@ -182,7 +219,6 @@
               </datalist>
             </div>
           </div>
-
           <div class="row2">
             <div>
               <label for="coord">Coordinates</label>
@@ -193,10 +229,8 @@
               <input id="whenShot" name="whenShot" type="text" placeholder="06:14" />
             </div>
           </div>
-
           <label for="cond">Conditions</label>
           <input id="cond" name="cond" type="text" placeholder="Overcast · 51°F · light rain" />
-
           <div class="row2">
             <div>
               <label for="aspectRatio">Aspect (height factor)</label>
@@ -207,7 +241,6 @@
               <label><input type="checkbox" id="published" checked /> Published</label>
             </div>
           </div>
-
           <button type="submit" id="uploadBtn">Upload photo</button>
           <p class="msg" id="uploadMsg"></p>
         </form>
@@ -221,72 +254,134 @@
         <div class="list" id="list"><p class="empty">Loading…</p></div>
       </section>
 
-      <p style="margin-top:1rem"><button type="button" class="secondary" id="lock">Lock admin</button></p>
+      <p style="margin-top:1rem"><button type="button" class="secondary" id="logoutBtn">Sign out</button></p>
     </div>
   </div>
 
   <script>
-    const DEFAULT_API = localStorage.getItem("kp_api") || "http://localhost:3000";
-    const tokenInput = document.getElementById("token");
-    const apiInput = document.getElementById("apiBase");
+    /* Default API — blank means same origin (best when opened at https://api…/admin/). */
+    const CONFIG = {
+      apiBase: localStorage.getItem("kp_api") || "",
+    };
+
     const gate = document.getElementById("gate");
     const app = document.getElementById("app");
     const gateMsg = document.getElementById("gateMsg");
     const uploadMsg = document.getElementById("uploadMsg");
     const listEl = document.getElementById("list");
+    const who = document.getElementById("who");
+    const apiInput = document.getElementById("apiBase");
+    const emailInput = document.getElementById("email");
+    const passwordInput = document.getElementById("password");
 
-    apiInput.value = DEFAULT_API;
-    tokenInput.value = sessionStorage.getItem("kp_admin_token") || "";
+    apiInput.value = CONFIG.apiBase;
+    emailInput.value = localStorage.getItem("kp_admin_email") || "";
+
+    let sessionToken = sessionStorage.getItem("kp_session") || "";
 
     function apiBase() {
-      return (apiInput.value || DEFAULT_API).replace(/\/$/, "");
+      const typed = (apiInput.value || CONFIG.apiBase || "").trim().replace(/\/$/, "");
+      if (typed) return typed;
+      // Same-origin when admin is served from the API
+      return location.origin;
     }
-    function token() {
-      return tokenInput.value.trim();
-    }
+
     function authHeaders(json) {
-      const h = { Authorization: "Bearer " + token() };
+      const h = {};
+      if (sessionToken) h.Authorization = "Bearer " + sessionToken;
       if (json) h["Content-Type"] = "application/json";
       return h;
     }
+
     function setMsg(el, text, ok) {
       el.textContent = text || "";
       el.className = "msg " + (ok ? "ok" : text ? "err" : "");
     }
 
-    async function unlock() {
-      if (!token()) {
-        setMsg(gateMsg, "Enter your ADMIN_TOKEN", false);
-        return;
+    async function api(path, opts = {}) {
+      const res = await fetch(apiBase() + path, {
+        credentials: "include",
+        ...opts,
+        headers: { ...authHeaders(opts.json), ...(opts.headers || {}) },
+        body: opts.json ? JSON.stringify(opts.json) : opts.body,
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        const err = new Error(data.message || "Request failed (" + res.status + ")");
+        err.status = res.status;
+        err.data = data;
+        throw err;
       }
-      localStorage.setItem("kp_api", apiBase());
+      return data;
+    }
+
+    function showApp(email) {
+      gate.hidden = true;
+      app.hidden = false;
+      who.hidden = false;
+      who.textContent = email ? ("Signed in as " + email) : "Signed in";
+    }
+
+    function showGate() {
+      gate.hidden = false;
+      app.hidden = true;
+      who.hidden = true;
+      who.textContent = "";
+      sessionToken = "";
+      sessionStorage.removeItem("kp_session");
+    }
+
+    async function restoreSession() {
       try {
-        const res = await fetch(apiBase() + "/admin/photos", {
-          headers: authHeaders(),
+        const me = await api("/auth/me");
+        showApp(me.email);
+        await loadList();
+        return true;
+      } catch {
+        return false;
+      }
+    }
+
+    document.getElementById("loginForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById("loginBtn");
+      btn.disabled = true;
+      setMsg(gateMsg, "Signing in…", true);
+      localStorage.setItem("kp_api", apiInput.value.trim());
+      localStorage.setItem("kp_admin_email", emailInput.value.trim());
+      try {
+        const data = await api("/auth/login", {
+          method: "POST",
+          json: {
+            email: emailInput.value.trim(),
+            password: passwordInput.value,
+          },
         });
-        if (!res.ok) throw new Error(res.status === 401 ? "Invalid token" : "API error " + res.status);
-        sessionStorage.setItem("kp_admin_token", token());
-        gate.hidden = true;
-        app.hidden = false;
+        if (data.token) {
+          sessionToken = data.token;
+          sessionStorage.setItem("kp_session", data.token);
+        }
+        passwordInput.value = "";
         setMsg(gateMsg, "", true);
+        showApp(data.email);
         await loadList();
       } catch (err) {
         setMsg(gateMsg, err.message, false);
+      } finally {
+        btn.disabled = false;
       }
-    }
+    });
 
     async function loadList() {
       listEl.innerHTML = "<p class='empty'>Loading…</p>";
       try {
-        const res = await fetch(apiBase() + "/admin/photos", { headers: authHeaders() });
-        if (!res.ok) throw new Error("Failed to load (" + res.status + ")");
-        const rows = await res.json();
+        const rows = await api("/admin/photos");
         if (!rows.length) {
           listEl.innerHTML = "<p class='empty'>No photos yet — upload your first print above.</p>";
           return;
         }
         listEl.innerHTML = rows.map((p) => `
-          <article class="item" data-id="${p.id}">
+          <article class="item" data-id="${p.id}" data-sale="${p.forSale}" data-pub="${p.published}">
             <img src="${p.src}" alt="" />
             <div>
               <p class="t">${escapeHtml(p.title)}</p>
@@ -301,11 +396,15 @@
               <button type="button" class="danger" data-act="del">Delete</button>
             </div>
           </article>`).join("");
-
         listEl.querySelectorAll("button[data-act]").forEach((btn) => {
           btn.addEventListener("click", () => onAction(btn));
         });
       } catch (err) {
+        if (err.status === 401) {
+          showGate();
+          setMsg(gateMsg, "Session expired — sign in again", false);
+          return;
+        }
         listEl.innerHTML = "<p class='empty'>" + escapeHtml(err.message) + "</p>";
       }
     }
@@ -318,28 +417,17 @@
       try {
         if (act === "del") {
           if (!confirm("Delete this photo permanently?")) return;
-          const res = await fetch(apiBase() + "/admin/photos/" + id, {
-            method: "DELETE",
-            headers: authHeaders(),
-          });
-          if (!res.ok) throw new Error("Delete failed");
-        } else {
-          const meta = item.querySelector(".meta").textContent;
-          const body =
-            act === "sale"
-              ? { forSale: !/for sale/.test(meta) || /not for sale/.test(meta) }
-              : { published: !/· live/.test(meta) };
-          // clearer from button label:
-          const payload =
-            act === "sale"
-              ? { forSale: btn.textContent.includes("List") }
-              : { published: btn.textContent.includes("Publish") && !btn.textContent.includes("Unpublish") };
-          const res = await fetch(apiBase() + "/admin/photos/" + id, {
+          await api("/admin/photos/" + id, { method: "DELETE" });
+        } else if (act === "sale") {
+          await api("/admin/photos/" + id, {
             method: "PATCH",
-            headers: authHeaders(true),
-            body: JSON.stringify(payload),
+            json: { forSale: item.dataset.sale !== "true" },
           });
-          if (!res.ok) throw new Error("Update failed");
+        } else {
+          await api("/admin/photos/" + id, {
+            method: "PATCH",
+            json: { published: item.dataset.pub !== "true" },
+          });
         }
         await loadList();
       } catch (err) {
@@ -368,13 +456,7 @@
       btn.disabled = true;
       setMsg(uploadMsg, "Uploading…", true);
       try {
-        const res = await fetch(apiBase() + "/admin/photos", {
-          method: "POST",
-          headers: { Authorization: "Bearer " + token() },
-          body: fd,
-        });
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(data.message || "Upload failed (" + res.status + ")");
+        const data = await api("/admin/photos", { method: "POST", body: fd });
         setMsg(uploadMsg, "Uploaded #" + data.id + " — " + data.title, true);
         e.target.reset();
         document.getElementById("forSale").checked = true;
@@ -388,6 +470,13 @@
       }
     });
 
+    document.getElementById("refresh").addEventListener("click", loadList);
+    document.getElementById("logoutBtn").addEventListener("click", async () => {
+      try { await api("/auth/logout", { method: "POST", json: {} }); } catch (_) {}
+      showGate();
+      setMsg(gateMsg, "Signed out", true);
+    });
+
     function escapeHtml(s) {
       return String(s)
         .replace(/&/g, "&amp;")
@@ -396,16 +485,7 @@
         .replace(/"/g, "&quot;");
     }
 
-    document.getElementById("unlock").addEventListener("click", unlock);
-    document.getElementById("refresh").addEventListener("click", loadList);
-    document.getElementById("lock").addEventListener("click", () => {
-      sessionStorage.removeItem("kp_admin_token");
-      tokenInput.value = "";
-      app.hidden = true;
-      gate.hidden = false;
-    });
-
-    if (token()) unlock();
+    restoreSession();
   </script>
 </body>
 </html>

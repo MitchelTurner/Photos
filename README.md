@@ -50,11 +50,20 @@ const API_BASE = "http://localhost:3000";
 
 ### Upload photos for sale
 
-1. Open `/admin/` on the static site.
-2. Enter your API base URL and the `ADMIN_TOKEN` from `.env`.
+1. Open admin at `https://<your-api>/admin/` (preferred) or `/admin/` on the static site.
+2. Sign in with `ADMIN_EMAIL` + `ADMIN_PASSWORD`.
 3. Upload a print-ready JPEG/PNG with title + category.
 4. Published photos appear in the gallery via `GET /photos` and are what
    Stripe/Prodigi fulfill after checkout.
+
+Auth API:
+
+| Method | Path | Purpose |
+|--------|------|---------|
+| `POST` | `/auth/login` | Email/password → session cookie + token |
+| `GET` | `/auth/me` | Current session |
+| `POST` | `/auth/logout` | Clear session |
+| `GET` | `/health` | Liveness check |
 
 On Railway, mount a persistent volume at `UPLOAD_DIR` (e.g. `/data/uploads`)
 so files survive redeploys, and set `PUBLIC_API_URL` to the public API origin.
@@ -74,7 +83,10 @@ so files survive redeploys, and set `PUBLIC_API_URL` to the public API origin.
 | `PRODIGI_FALLBACK_ASSET_URL` | Sandbox fallback image if per-photo URLs aren’t set yet |
 | `PUBLIC_API_URL` | Public API origin used in `/media/...` URLs for Prodigi |
 | `UPLOAD_DIR` | Disk path for uploads (use a Railway volume in prod) |
-| `ADMIN_TOKEN` | Bearer token for `/admin` photo upload API |
+| `ADMIN_EMAIL` | Admin login email |
+| `ADMIN_PASSWORD` | Admin login password (or use `ADMIN_PASSWORD_HASH`) |
+| `ADMIN_SESSION_SECRET` | HMAC secret for session tokens/cookies |
+| `ADMIN_TOKEN` | Optional legacy raw Bearer token |
 
 Print-ready image URLs are resolved in this order
 (`server/src/photos.ts` → env base → fallback).
