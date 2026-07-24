@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Order confirmed — Ketchikan Photos</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Space+Mono:wght@400;700&family=Source+Sans+3:wght@400;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --ink: #142428;
+      --fog: #e8eef0;
+      --mist: #c5d4d8;
+      --salmon: #c45c3e;
+      --sea: #1f4d52;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Source Sans 3", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(ellipse 80% 50% at 20% 0%, #d7e6e8 0%, transparent 55%),
+        radial-gradient(ellipse 60% 40% at 90% 100%, #e8d8ce 0%, transparent 50%),
+        linear-gradient(160deg, #f3f6f7 0%, #dfe9eb 45%, #f6f1ec 100%);
+      display: grid;
+      place-items: center;
+      padding: 2rem 1.25rem;
+    }
+    main {
+      width: min(36rem, 100%);
+      text-align: left;
+    }
+    .brand {
+      font-family: "Fraunces", Georgia, serif;
+      font-size: clamp(2rem, 5vw, 2.75rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin: 0 0 1.5rem;
+      color: var(--sea);
+    }
+    h1 {
+      font-family: "Fraunces", Georgia, serif;
+      font-size: 1.35rem;
+      font-weight: 500;
+      margin: 0 0 0.6rem;
+    }
+    p {
+      margin: 0 0 1rem;
+      line-height: 1.55;
+      color: #2a3a3e;
+      max-width: 34ch;
+    }
+    .status {
+      font-family: "Space Mono", monospace;
+      font-size: 0.72rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--salmon);
+      margin-bottom: 1.25rem;
+    }
+    a {
+      color: var(--sea);
+      font-weight: 600;
+      text-underline-offset: 3px;
+    }
+    .back {
+      display: inline-block;
+      margin-top: 1.5rem;
+      font-family: "Space Mono", monospace;
+      font-size: 0.78rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      text-decoration: none;
+      border-bottom: 1px solid var(--sea);
+      padding-bottom: 2px;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <p class="brand">Ketchikan.Photos</p>
+    <p class="status" id="status">Confirming payment…</p>
+    <h1 id="title">Thanks — your print order is in.</h1>
+    <p id="copy">We’re confirming your payment and sending the order to the print lab. You’ll get a receipt from Stripe by email.</p>
+    <a class="back" href="/">← Back to the gallery</a>
+  </main>
+  <script>
+    /* Point this at the same API host as CONFIG.checkoutEndpoint (without /checkout). */
+    const API_BASE = "https://phot-api.up.railway.app";
+
+    (function () {
+      const params = new URLSearchParams(location.search);
+      const sessionId = params.get("session_id");
+      const statusEl = document.getElementById("status");
+      const titleEl = document.getElementById("title");
+      const copyEl = document.getElementById("copy");
+
+      if (!sessionId) {
+        statusEl.textContent = "Missing session";
+        titleEl.textContent = "We couldn’t find that checkout.";
+        copyEl.textContent = "If you completed payment, check your email receipt — or return to the gallery and try again.";
+        return;
+      }
+
+      if (!API_BASE) {
+        statusEl.textContent = "Payment received";
+        return;
+      }
+
+      fetch(API_BASE + "/order/status?session_id=" + encodeURIComponent(sessionId))
+        .then((r) => r.json())
+        .then((data) => {
+          if (data.status === "fulfilled" || data.status === "fulfilling") {
+            statusEl.textContent = "Paid · sent to print lab";
+            titleEl.textContent = "Your prints are on their way to production.";
+            copyEl.textContent = "We’ll fulfill through our print partner. Tracking updates arrive by email when the lab ships.";
+          } else if (data.status === "paid") {
+            statusEl.textContent = "Paid";
+            titleEl.textContent = "Payment confirmed.";
+            copyEl.textContent = "Fulfillment will start shortly. You’ll hear from us if we need anything else.";
+          } else if (data.status === "failed") {
+            statusEl.textContent = "Paid · fulfillment needs attention";
+            titleEl.textContent = "We received your payment.";
+            copyEl.textContent = "Something stalled while submitting to the print lab. We’ve logged it and will follow up by email — you don’t need to reorder.";
+          } else if (data.status === "unpaid") {
+            statusEl.textContent = "Payment incomplete";
+            titleEl.textContent = "Checkout didn’t finish.";
+            copyEl.textContent = "No charge went through for this session. Head back to the gallery when you’re ready.";
+          }
+        })
+        .catch(() => {
+          statusEl.textContent = "Payment received";
+        });
+    })();
+  </script>
+</body>
+</html>

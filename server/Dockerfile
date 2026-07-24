@@ -17,6 +17,7 @@ RUN npm run build \
 
 ENV NODE_ENV=production
 ENV UPLOAD_DIR=/data/uploads
+RUN mkdir -p /data/uploads
 EXPOSE 3000
 
 CMD ["npm", "run", "start:prod"]

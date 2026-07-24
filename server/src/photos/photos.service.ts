@@ -4,6 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { Photo } from '@prisma/client';
+import { existsSync } from 'fs';
 import { unlink } from 'fs/promises';
 import { join } from 'path';
 import { PrismaService } from '../prisma/prisma.service';
@@ -52,12 +53,17 @@ export class PhotosService {
     };
   }
 
+  fileOnDisk(filename: string): boolean {
+    return existsSync(join(uploadDir(), filename));
+  }
+
   async listPublished(): Promise<PhotoPublic[]> {
     const rows = await this.prisma.photo.findMany({
       where: { published: true },
       orderBy: [{ sortOrder: 'asc' }, { id: 'desc' }],
     });
-    return rows.map((p) => this.toPublic(p));
+    // Skip DB rows whose upload file is missing (common after redeploy without a volume)
+    return rows.filter((p) => this.fileOnDisk(p.filename)).map((p) => this.toPublic(p));
   }
 
   async listAll(): Promise<PhotoPublic[]> {
@@ -79,6 +85,7 @@ export class PhotosService {
       ...this.toPublic(p),
       published: p.published,
       filename: p.filename,
+      fileMissing: !this.fileOnDisk(p.filename),
       createdAt: p.createdAt,
     }));
   }
@@ -92,6 +99,11 @@ export class PhotosService {
         `Photo ${photoId} is not available for sale`,
       );
     }
+    if (!this.fileOnDisk(photo.filename)) {
+      throw new BadRequestException(
+        `Photo ${photoId} file is missing on the server — re-upload it in /admin`,
+      );
+    }
     return photo;
   }
 
@@ -99,7 +111,10 @@ export class PhotosService {
     const photo = await this.prisma.photo.findUnique({
       where: { id: photoId },
     });
-    if (photo) return mediaUrl(photo.filename);
+    if (photo) {
+      if (!this.fileOnDisk(photo.filename)) return null;
+      return mediaUrl(photo.filename);
+    }
 
     const base = process.env.PRINT_ASSET_BASE_URL?.replace(/\/$/, '');
     if (base) return `${base}/${photoId}.jpg`;

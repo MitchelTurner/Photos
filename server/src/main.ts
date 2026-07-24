@@ -2,7 +2,7 @@ import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import cookieParser from 'cookie-parser';
-import { existsSync } from 'fs';
+import { existsSync, mkdirSync, readdirSync } from 'fs';
 import { join } from 'path';
 import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './common/http-exception.filter';
@@ -10,6 +10,13 @@ import { uploadDir } from './photos/upload.config';
 
 function stripSlash(url: string): string {
   return url.replace(/\/$/, '');
+}
+
+function resolvePublicDir(): string | null {
+  return [
+    join(process.cwd(), 'public'),
+    join(__dirname, '..', 'public'),
+  ].find((p) => existsSync(join(p, 'index.html'))) || null;
 }
 
 async function bootstrap() {
@@ -28,14 +35,21 @@ async function bootstrap() {
     .map((s) => s.trim())
     .filter(Boolean);
   const allowlist = new Set(
-    [siteUrl, publicApi, ...extra, 'http://localhost:5500', 'http://127.0.0.1:5500', 'http://localhost:3000', 'http://127.0.0.1:3000']
+    [
+      siteUrl,
+      publicApi,
+      ...extra,
+      'http://localhost:5500',
+      'http://127.0.0.1:5500',
+      'http://localhost:3000',
+      'http://127.0.0.1:3000',
+      'https://ketchikanphotos.com',
+      'https://www.ketchikanphotos.com',
+    ]
       .filter(Boolean)
       .map(stripSlash),
   );
 
-  // Reflect allowed Origins so credentialed admin/login works from the static site.
-  // Set SITE_URL (and optional CORS_ORIGINS) to your SiteGround origin(s).
-  // CORS_ALLOW_ANY=true reflects every Origin. Default true until SITE_URL is a real host.
   const siteIsPlaceholder =
     !process.env.SITE_URL ||
     /localhost|127\.0\.0\.1/i.test(process.env.SITE_URL);
@@ -54,14 +68,13 @@ async function bootstrap() {
         callback(null, true);
         return;
       }
-      // Always allow the API host itself (admin served from /admin on Railway).
       try {
         if (publicApi && new URL(o).host === new URL(stripSlash(publicApi)).host) {
           callback(null, true);
           return;
         }
       } catch {
-        /* ignore bad PUBLIC_API_URL */
+        /* ignore */
       }
       callback(null, false);
     },
@@ -70,23 +83,30 @@ async function bootstrap() {
     credentials: true,
   });
 
-  // Public media for gallery + Prodigi asset download
-  app.useStaticAssets(uploadDir(), { prefix: '/media/' });
+  // Ensure upload directory exists (Railway volume should mount here)
+  const mediaDir = uploadDir();
+  mkdirSync(mediaDir, { recursive: true });
+  let mediaCount = 0;
+  try {
+    mediaCount = readdirSync(mediaDir).filter((f) => !f.startsWith('.')).length;
+  } catch {
+    /* ignore */
+  }
+  // eslint-disable-next-line no-console
+  console.log(`Upload dir ${mediaDir} (${mediaCount} files)`);
 
-  // Host /admin on the API (preferred login URL — same origin as /auth/login)
-  const adminDir = [
-    join(process.cwd(), 'public', 'admin'),
-    join(__dirname, '..', 'public', 'admin'),
-    join(process.cwd(), 'admin'),
-    join(process.cwd(), '..', 'admin'),
-  ].find((p) => existsSync(join(p, 'index.html')));
-  if (adminDir) {
-    app.useStaticAssets(adminDir, { prefix: '/admin/' });
+  // Explicit /media/:file is also handled by MediaController; keep static as fallback
+  app.useStaticAssets(mediaDir, { prefix: '/media/' });
+
+  // Gallery + admin + success page (so the site works on Railway without SiteGround sync)
+  const publicDir = resolvePublicDir();
+  if (publicDir) {
+    app.useStaticAssets(publicDir, { index: 'index.html' });
     // eslint-disable-next-line no-console
-    console.log(`Admin UI at /admin/ (from ${adminDir})`);
+    console.log(`Site UI from ${publicDir}`);
   } else {
     // eslint-disable-next-line no-console
-    console.warn('Admin UI not found — expected server/public/admin/index.html');
+    console.warn('public/index.html not found — gallery not served from API');
   }
 
   app.useGlobalPipes(

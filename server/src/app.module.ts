@@ -6,6 +6,7 @@ import { CheckoutController } from './checkout/checkout.controller';
 import { CheckoutService } from './checkout/checkout.service';
 import { OrdersService } from './orders/orders.service';
 import { AdminGuard } from './photos/admin.guard';
+import { MediaController } from './photos/media.controller';
 import { PhotosController } from './photos/photos.controller';
 import { PhotosService } from './photos/photos.service';
 import { PrismaService } from './prisma/prisma.service';
@@ -20,6 +21,7 @@ import { WebhookController } from './webhook/webhook.controller';
     CheckoutController,
     WebhookController,
     PhotosController,
+    MediaController,
   ],
   providers: [
     PrismaService,
