@@ -50,8 +50,10 @@ const API_BASE = "http://localhost:3000";
 
 ### Upload photos for sale
 
-1. Open admin at `https://<your-api>/admin/` (preferred) or `/admin/` on the static site.
-2. Sign in with `ADMIN_EMAIL` + `ADMIN_PASSWORD`.
+1. Open admin on the **API host** (avoids login 404s from the static site):
+   `https://<your-railway-api>/admin/`
+2. Confirm the API base URL field shows that same Railway origin (green “API connected”).
+3. Sign in with `ADMIN_EMAIL` + `ADMIN_PASSWORD`.
 3. Upload a print-ready JPEG/PNG with title + category.
 4. Published photos appear in the gallery via `GET /photos` and are what
    Stripe/Prodigi fulfill after checkout.

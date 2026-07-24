@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { AdminPageController } from './auth/admin-page.controller';
 import { AuthController, HealthController } from './auth/auth.controller';
 import { AuthService } from './auth/auth.service';
 import { CheckoutController } from './checkout/checkout.controller';
@@ -15,6 +16,7 @@ import { WebhookController } from './webhook/webhook.controller';
   controllers: [
     HealthController,
     AuthController,
+    AdminPageController,
     CheckoutController,
     WebhookController,
     PhotosController,

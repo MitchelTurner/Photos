@@ -43,14 +43,20 @@ async function bootstrap() {
   // Public media for gallery + Prodigi asset download
   app.useStaticAssets(uploadDir(), { prefix: '/media/' });
 
-  // Host /admin on the API too (same-origin cookies when opened there)
+  // Host /admin on the API (preferred login URL — same origin as /auth/login)
   const adminDir = [
+    join(process.cwd(), 'public', 'admin'),
+    join(__dirname, '..', 'public', 'admin'),
     join(process.cwd(), 'admin'),
     join(process.cwd(), '..', 'admin'),
-    join(__dirname, '..', '..', '..', 'admin'),
   ].find((p) => existsSync(join(p, 'index.html')));
   if (adminDir) {
     app.useStaticAssets(adminDir, { prefix: '/admin/' });
+    // eslint-disable-next-line no-console
+    console.log(`Admin UI at /admin/ (from ${adminDir})`);
+  } else {
+    // eslint-disable-next-line no-console
+    console.warn('Admin UI not found — expected server/public/admin/index.html');
   }
 
   app.useGlobalPipes(
