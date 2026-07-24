@@ -440,7 +440,7 @@
   <div class="filters" id="filters" role="group" aria-label="Filter photographs by category"></div>
 
   <div class="grid" id="grid"></div>
-  <div class="empty" id="empty">No frames in this category yet.</div>
+  <div class="empty" id="empty">No photographs uploaded yet.</div>
 </main>
 
 <!-- ============ ABOUT ============ -->
@@ -552,32 +552,13 @@
    Upload sale photos at /admin/ (email + password login). Gallery loads GET /photos.
    ========================================================================= */
 const CONFIG = {
-  apiBase: "",                       // e.g. "http://localhost:3000" or Railway URL
-  checkoutEndpoint: "",              // e.g. "http://localhost:3000/checkout"
+  apiBase: "https://phot-api.up.railway.app",
+  checkoutEndpoint: "https://phot-api.up.railway.app/checkout",
   licenseEmail: "hello@ketchikanphotos.com",
 };
 
-/* Demo placeholders when the API has no published photos yet */
-const FALLBACK_PHOTOS = [
-  { id:1,  cat:"Harbor & Fleet", title:"Thomas Basin at slack tide", coord:"55.339°N 131.641°W", cond:"Overcast · 51°F · light rain", when:"06:14", h:1.28, tone:["#12333a","#2a5a55"], src:"", forSale:false },
-  { id:2,  cat:"Creek Street",   title:"The boardwalk on its pilings", coord:"55.342°N 131.643°W", cond:"Fog · 48°F", when:"08:02", h:1.5,  tone:["#1c2e33","#7d5a3c"], src:"", forSale:false },
-  { id:3,  cat:"Totem Poles",    title:"Saxman, cedar and paint", coord:"55.318°N 131.610°W", cond:"Broken cloud · 53°F", when:"11:20", h:1.34, tone:["#2a1512","#b04a30"], src:"", forSale:false },
-  { id:4,  cat:"Misty Fjords",   title:"New Eddystone Rock", coord:"55.549°N 130.760°W", cond:"Low ceiling · 46°F", when:"09:41", h:1.15, tone:["#101f28","#39777f"], src:"", forSale:false },
-  { id:5,  cat:"Wildlife",       title:"Bald eagle off the rocks", coord:"55.351°N 131.671°W", cond:"Drizzle · 49°F", when:"07:33", h:1.42, tone:["#182b2c","#8a9a8f"], src:"", forSale:false },
-  { id:6,  cat:"Weather & Light",title:"Sun breaks over the Narrows", coord:"55.345°N 131.700°W", cond:"Clearing · 55°F", when:"18:57", h:1.2,  tone:["#241a12","#c9743f"], src:"", forSale:false },
-  { id:7,  cat:"Harbor & Fleet", title:"Mending net on the deck", coord:"55.340°N 131.640°W", cond:"Rain · 50°F", when:"10:08", h:1.5,  tone:["#14282e","#3d6b64"], src:"", forSale:false },
-  { id:8,  cat:"Aerials",        title:"Downtown & Pennock Island", coord:"55.344°N 131.646°W", cond:"Hazy · 54°F · from 400 ft", when:"13:22", h:1.1,  tone:["#122a2f","#4d8a82"], src:"", forSale:false },
-  { id:9,  cat:"Creek Street",   title:"Married Man's Trail, wet cedar", coord:"55.343°N 131.642°W", cond:"Rain · 47°F", when:"15:46", h:1.36, tone:["#1a241f","#5c7048"], src:"", forSale:false },
-  { id:10, cat:"Misty Fjords",   title:"Cliff walls, cloud on the water", coord:"55.560°N 130.780°W", cond:"Overcast · 45°F", when:"12:10", h:1.55, tone:["#0f1f26","#356b73"], src:"", forSale:false },
-  { id:11, cat:"Weather & Light",title:"Float plane lifting at low tide", coord:"55.355°N 131.712°W", cond:"Broken cloud · 52°F", when:"08:49", h:1.18, tone:["#1d2733","#6f88a0"], src:"", forSale:false },
-  { id:12, cat:"Wildlife",       title:"Sockeye holding in the creek", coord:"55.341°N 131.638°W", cond:"Rain · 49°F", when:"16:31", h:1.3,  tone:["#231512","#a83f2c"], src:"", forSale:false },
-  { id:13, cat:"Harbor & Fleet", title:"Evening light on the hulls", coord:"55.338°N 131.643°W", cond:"Clearing · 53°F", when:"19:40", h:1.44, tone:["#1a1410","#c56b3a"], src:"", forSale:false },
-  { id:14, cat:"Totem Poles",    title:"Clan house, Totem Bight", coord:"55.418°N 131.780°W", cond:"Overcast · 50°F", when:"14:05", h:1.24, tone:["#22160f","#8a5a34"], src:"", forSale:false },
-  { id:15, cat:"Aerials",        title:"The fleet from above the basin", coord:"55.339°N 131.641°W", cond:"Drizzle · 48°F · from 350 ft", when:"11:58", h:1.5,  tone:["#12262b","#437d76"], src:"", forSale:false },
-  { id:16, cat:"Weather & Light",title:"150 inches a year, in one frame", coord:"55.344°N 131.646°W", cond:"Heavy rain · 47°F", when:"17:12", h:1.32, tone:["#141d22","#4a6f78"], src:"", forSale:false },
-];
-
-let PHOTOS = FALLBACK_PHOTOS.slice();
+/* Gallery shows only published photos uploaded via /admin (GET /photos). */
+let PHOTOS = [];
 
 /* Print sizes — display only. Prices in cents. The SERVER re-derives every
    price from server/src/catalog.ts by sizeKey; these are just for the UI. */
@@ -618,7 +599,10 @@ function fieldnote(p){
 }
 
 function renderGallery(){
-  const CATS = ["All", ...Array.from(new Set(PHOTOS.map(p=>p.cat)))];
+  const emptyEl=document.getElementById('empty');
+  const CATS = PHOTOS.length
+    ? ["All", ...Array.from(new Set(PHOTOS.map(p=>p.cat)))]
+    : ["All"];
   filtersEl.innerHTML="";
   grid.innerHTML="";
   CATS.forEach((c,i)=>{
@@ -631,6 +615,11 @@ function renderGallery(){
     b.addEventListener('click',()=>applyFilter(c,b));
     filtersEl.appendChild(b);
   });
+  if(!PHOTOS.length){
+    emptyEl.textContent="No photographs uploaded yet.";
+    emptyEl.style.display='block';
+    return;
+  }
   PHOTOS.forEach(p=>{
     const card=document.createElement('article');
     card.className='card';card.dataset.cat=p.cat;card.tabIndex=0;
@@ -670,7 +659,9 @@ function applyFilter(cat,btn){
     c.classList.toggle('hide',!match);
     if(match) shown++;
   });
-  document.getElementById('empty').style.display = shown? 'none':'block';
+  const emptyEl=document.getElementById('empty');
+  emptyEl.textContent = PHOTOS.length ? 'No frames in this category yet.' : 'No photographs uploaded yet.';
+  emptyEl.style.display = shown? 'none':'block';
 }
 
 /* ---------- reveal on scroll ---------- */
@@ -846,24 +837,27 @@ document.querySelectorAll('.cta-row .btn').forEach(b=>{
 
 document.getElementById('yr').textContent=new Date().getFullYear();
 
-/* Load published photos from the API (uploaded via /admin). Fall back to demos. */
+/* Load published photos from the API only (uploaded via /admin). */
 async function bootGallery(){
   const base = (CONFIG.apiBase || (CONFIG.checkoutEndpoint||"").replace(/\/checkout\/?$/,"" )).replace(/\/$/,"");
-  if(base){
-    try{
-      const res = await fetch(base + "/photos");
-      if(res.ok){
-        const rows = await res.json();
-        if(Array.isArray(rows) && rows.length){
-          PHOTOS = rows.map(p=>({
-            id:p.id, cat:p.cat, title:p.title, coord:p.coord||"", cond:p.cond||"",
-            when:p.when||"", h:p.h||1.25, tone:p.tone||["#12333a","#2a5a55"],
-            src:p.src||"", forSale:p.forSale!==false
-          }));
-        }
-      }
-    }catch(_){ /* keep fallback */ }
+  PHOTOS = [];
+  if(!base){
+    renderGallery();
+    return;
   }
+  try{
+    const res = await fetch(base + "/photos", { cache: "no-store" });
+    if(res.ok){
+      const rows = await res.json();
+      if(Array.isArray(rows)){
+        PHOTOS = rows.map(p=>({
+          id:p.id, cat:p.cat, title:p.title, coord:p.coord||"", cond:p.cond||"",
+          when:p.when||"", h:p.h||1.25, tone:p.tone||["#12333a","#2a5a55"],
+          src:p.src||"", forSale:p.forSale!==false
+        }));
+      }
+    }
+  }catch(_){ /* leave empty */ }
   renderGallery();
 }
 bootGallery();
