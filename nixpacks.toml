@@ -1,8 +1,5 @@
-# Force Node — without this, index.html makes Nixpacks pick nginx.
+# Fallback for repo-root deploys. Do not override nixPkgs without nodejs.
 providers = ["node"]
 
 [variables]
 NIXPACKS_NODE_VERSION = "22"
-
-[phases.setup]
-nixPkgs = ["openssl"]

@@ -1,8 +1,6 @@
-# Used when Railway Root Directory = server
+# Fallback if builder is switched back to NIXPACKS.
+# Do NOT override nixPkgs with only openssl — that removes Node.
 providers = ["node"]
 
 [variables]
 NIXPACKS_NODE_VERSION = "22"
-
-[phases.setup]
-nixPkgs = ["openssl"]

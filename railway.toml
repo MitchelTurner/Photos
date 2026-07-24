@@ -1,13 +1,15 @@
-# Deploy from repo root. Root package.json + nixpacks.toml force Node
-# (otherwise index.html makes Nixpacks install nginx and npm fails).
-# Dashboard: leave Root Directory empty / "/".
+# IMPORTANT: In Railway dashboard set Root Directory = "server"
+# and use config file /server/railway.toml (Dockerfile build).
+#
+# This root file is only a pointer — do not deploy with Root Directory = "/".
 
 [build]
-builder = "NIXPACKS"
-buildCommand = "npm run build"
+builder = "DOCKERFILE"
+dockerfilePath = "server/Dockerfile"
 
 [deploy]
-startCommand = "npm run start:prod"
+# Only valid if Root Directory is "/"; prefer Root Directory = server instead.
+startCommand = "npm run start:prod --prefix server"
 healthcheckPath = "/health"
 healthcheckTimeout = 120
 restartPolicyType = "ON_FAILURE"
