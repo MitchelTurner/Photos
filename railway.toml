@@ -1,12 +1,13 @@
-# Monorepo: point the Railway service Root Directory to /server
-# and Config File path to /server/railway.toml (or use the copy below).
+# Monorepo: Root Directory is set to /server so Nixpacks can detect
+# Node.js correctly during the build image phase.
+rootDirectory = "/server"
 
 [build]
 builder = "NIXPACKS"
-buildCommand = "cd server && npm ci && npm run build"
+buildCommand = "npm ci && npm run build"
 
 [deploy]
-startCommand = "cd server && npm run start:prod"
+startCommand = "npm run start:prod"
 healthcheckPath = "/health"
 healthcheckTimeout = 120
 restartPolicyType = "ON_FAILURE"
