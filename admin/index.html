@@ -183,7 +183,8 @@
 
     <section class="panel gate" id="gate">
       <h2>Sign in</h2>
-      <p class="hint">Use <code>ADMIN_EMAIL</code> and <code>ADMIN_PASSWORD</code> from Railway. Prefer opening this page on the API: <code>https://your-api.up.railway.app/admin/</code></p>
+      <p class="hint">Use the exact <code>ADMIN_EMAIL</code> / <code>ADMIN_PASSWORD</code> values from the Railway Variables tab (no extra quotes). Prefer <code>https://phot-api.up.railway.app/admin/</code>.</p>
+      <p class="hint" id="emailHint" hidden></p>
       <form id="loginForm">
         <div class="api-box">
           <label for="apiBase">API base URL</label>
@@ -563,7 +564,25 @@
         .replace(/"/g, "&quot;");
     }
 
-    restoreSession();
+    async function loadAuthHint() {
+      try {
+        const st = await fetch(apiBase() + "/auth/status", { cache: "no-store" })
+          .then((r) => r.json());
+        const el = document.getElementById("emailHint");
+        if (st.emailHint) {
+          el.hidden = false;
+          el.innerHTML = "Configured admin email looks like <code>" + escapeHtml(st.emailHint) + "</code>";
+          if (!emailInput.value) {
+            // Don't autofill full email (unknown); leave blank
+          }
+        } else if (!st.loginConfigured) {
+          el.hidden = false;
+          el.textContent = "Admin login is not configured — set ADMIN_EMAIL and ADMIN_PASSWORD on Railway.";
+        }
+      } catch (_) { /* ignore */ }
+    }
+
+    restoreSession().then(() => loadAuthHint());
   </script>
 </body>
 </html>

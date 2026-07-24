@@ -57,9 +57,7 @@ export class AuthController {
   status() {
     return {
       ok: true,
-      loginConfigured:
-        this.auth.isConfigured() || Boolean(process.env.ADMIN_TOKEN),
-      emailRequired: Boolean(this.auth.adminEmail()),
+      ...this.auth.authDiagnostics(),
     };
   }
 }

@@ -36,7 +36,32 @@ export class AuthService {
   }
 
   adminEmail(): string {
-    return (process.env.ADMIN_EMAIL || '').trim().toLowerCase();
+    return cleanEnv(process.env.ADMIN_EMAIL).toLowerCase();
+  }
+
+  /** Masked hint for the login form, e.g. j***@example.com */
+  emailHint(): string | null {
+    const email = this.adminEmail();
+    if (!email || !email.includes('@')) return null;
+    const [user, domain] = email.split('@');
+    if (!user) return null;
+    const keep = user.slice(0, 1);
+    return `${keep}***@${domain}`;
+  }
+
+  authDiagnostics() {
+    return {
+      loginConfigured: this.isConfigured() || Boolean(cleanEnv(process.env.ADMIN_TOKEN)),
+      emailRequired: Boolean(this.adminEmail()),
+      emailHint: this.emailHint(),
+      passwordSource: process.env.ADMIN_PASSWORD_HASH?.trim()
+        ? 'ADMIN_PASSWORD_HASH'
+        : cleanEnv(process.env.ADMIN_PASSWORD)
+          ? 'ADMIN_PASSWORD'
+          : cleanEnv(process.env.ADMIN_TOKEN)
+            ? 'ADMIN_TOKEN'
+            : 'none',
+    };
   }
 
   /** Login with email + password. Supports bcrypt hash or plaintext ADMIN_PASSWORD.
@@ -44,7 +69,7 @@ export class AuthService {
   async login(email: string, password: string, ip: string) {
     this.assertRateLimit(ip);
 
-    if (!this.isConfigured() && !process.env.ADMIN_TOKEN) {
+    if (!this.isConfigured() && !cleanEnv(process.env.ADMIN_TOKEN)) {
       throw new UnauthorizedException(
         'Admin login is not configured. Set ADMIN_EMAIL + ADMIN_PASSWORD (or ADMIN_TOKEN).',
       );
@@ -165,14 +190,14 @@ export class AuthService {
   }
 
   private sessionSecret(): string {
-    const explicit = process.env.ADMIN_SESSION_SECRET?.trim();
+    const explicit = cleanEnv(process.env.ADMIN_SESSION_SECRET);
     if (explicit) return explicit;
     // Derive a stable secret from configured credentials so sessions survive restarts
     // even if ADMIN_SESSION_SECRET isn't set (still set it in production).
     const material =
-      process.env.ADMIN_PASSWORD ||
-      process.env.ADMIN_PASSWORD_HASH ||
-      process.env.ADMIN_TOKEN ||
+      cleanEnv(process.env.ADMIN_PASSWORD) ||
+      cleanEnv(process.env.ADMIN_PASSWORD_HASH) ||
+      cleanEnv(process.env.ADMIN_TOKEN) ||
       randomBytes(32).toString('hex');
     return createHmac('sha256', 'ketchikanphotos-admin')
       .update(material)
@@ -181,34 +206,36 @@ export class AuthService {
 
   private passwordConfigured(): boolean {
     return Boolean(
-      process.env.ADMIN_PASSWORD ||
-        process.env.ADMIN_PASSWORD_HASH ||
-        process.env.ADMIN_TOKEN,
+      cleanEnv(process.env.ADMIN_PASSWORD) ||
+        cleanEnv(process.env.ADMIN_PASSWORD_HASH) ||
+        cleanEnv(process.env.ADMIN_TOKEN),
     );
   }
 
   private async passwordMatches(password: string): Promise<boolean> {
-    const hash = process.env.ADMIN_PASSWORD_HASH?.trim();
+    const input = password.normalize('NFC');
+    const hash = cleanEnv(process.env.ADMIN_PASSWORD_HASH);
     if (hash) {
       try {
-        return await bcrypt.compare(password, hash);
+        return await bcrypt.compare(input, hash);
       } catch {
         return false;
       }
     }
-    const plain = process.env.ADMIN_PASSWORD;
-    if (plain != null && plain !== '') {
-      return safeEqual(password, plain);
+    const plain = cleanEnv(process.env.ADMIN_PASSWORD);
+    if (plain) {
+      return safeEqual(input, plain.normalize('NFC'));
     }
     // Legacy single shared secret
-    if (process.env.ADMIN_TOKEN) {
-      return safeEqual(password, process.env.ADMIN_TOKEN);
+    const token = cleanEnv(process.env.ADMIN_TOKEN);
+    if (token) {
+      return safeEqual(input, token.normalize('NFC'));
     }
     return false;
   }
 
   private legacyTokenMatches(token: string): boolean {
-    const expected = process.env.ADMIN_TOKEN;
+    const expected = cleanEnv(process.env.ADMIN_TOKEN);
     if (!expected) return false;
     return safeEqual(token, expected);
   }
@@ -239,6 +266,18 @@ export class AuthService {
     }
     row.count += 1;
   }
+}
+
+/** Trim whitespace/newlines and strip wrapping quotes from Railway env values. */
+function cleanEnv(value: string | undefined): string {
+  let v = (value ?? '').trim();
+  if (
+    (v.startsWith('"') && v.endsWith('"')) ||
+    (v.startsWith("'") && v.endsWith("'"))
+  ) {
+    v = v.slice(1, -1).trim();
+  }
+  return v;
 }
 
 function safeEqual(a: string, b: string): boolean {
