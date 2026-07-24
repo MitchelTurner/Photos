@@ -136,7 +136,8 @@ export class PhotosService {
     },
   ) {
     if (!file) throw new BadRequestException('Image file is required');
-    const title = (body.title || '').trim();
+    const title =
+      (body.title || '').trim() || titleFromFilename(file.originalname);
     const category = (body.category || '').trim();
     if (!title) throw new BadRequestException('title is required');
     if (!category) throw new BadRequestException('category is required');
@@ -166,6 +167,50 @@ export class PhotosService {
     return {
       ...this.toPublic(photo),
       published: photo.published,
+    };
+  }
+
+  /** Bulk upload — same metadata applied to every file; titles from each filename. */
+  async createManyFromUpload(
+    files: Express.Multer.File[] | undefined,
+    body: {
+      category?: string;
+      coord?: string;
+      cond?: string;
+      whenShot?: string;
+      aspectRatio?: string | number;
+      forSale?: string | boolean;
+      published?: string | boolean;
+    },
+  ) {
+    if (!files?.length) {
+      throw new BadRequestException('At least one image file is required');
+    }
+    if (files.length > 40) {
+      throw new BadRequestException('Maximum 40 files per bulk upload');
+    }
+    const created = [];
+    const errors: { file: string; error: string }[] = [];
+    for (const file of files) {
+      try {
+        created.push(
+          await this.createFromUpload(file, {
+            ...body,
+            title: titleFromFilename(file.originalname),
+          }),
+        );
+      } catch (err) {
+        errors.push({
+          file: file.originalname || file.filename,
+          error: err instanceof Error ? err.message : 'Upload failed',
+        });
+      }
+    }
+    return {
+      uploaded: created.length,
+      failed: errors.length,
+      photos: created,
+      errors,
     };
   }
 
@@ -226,4 +271,15 @@ function parseBool(v: string | boolean | undefined, fallback: boolean): boolean 
   if (typeof v === 'boolean') return v;
   if (v === undefined || v === '') return fallback;
   return v === 'true' || v === '1' || v === 'on' || v === 'yes';
+}
+
+function titleFromFilename(name: string | undefined): string {
+  if (!name) return '';
+  const base = name.replace(/^.*[\\/]/, '').replace(/\.[^.]+$/, '');
+  const cleaned = base
+    .replace(/[_+]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (!cleaned) return '';
+  return cleaned.replace(/\b\w/g, (c) => c.toUpperCase());
 }

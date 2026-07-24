@@ -202,15 +202,16 @@
 
     <div id="app" hidden>
       <section class="panel">
-        <h2>Upload a photograph</h2>
-        <p class="hint">Print-ready JPEG/PNG/WebP (ideally 300 DPI). The same file is used in the gallery and sent to Prodigi after checkout.</p>
+        <h2>Upload photographs</h2>
+        <p class="hint">Select one or many print-ready JPEG/PNG/WebP files (up to 40). Bulk uploads share category / sale settings; each title comes from the filename (you can edit titles later).</p>
         <form id="uploadForm">
-          <label for="file">Image file</label>
-          <input id="file" name="file" type="file" accept="image/jpeg,image/png,image/webp" required />
+          <label for="file">Image files</label>
+          <input id="file" name="file" type="file" accept="image/jpeg,image/png,image/webp" multiple required />
+          <p class="hint" id="fileHint" style="margin-top:-.4rem">No files selected</p>
           <div class="row2">
             <div>
-              <label for="title">Title</label>
-              <input id="title" name="title" type="text" required placeholder="Thomas Basin at slack tide" />
+              <label for="title">Title <span id="titleHint">(single file)</span></label>
+              <input id="title" name="title" type="text" placeholder="Thomas Basin at slack tide" />
             </div>
             <div>
               <label for="category">Category</label>
@@ -223,6 +224,10 @@
                 <option value="Wildlife"></option>
                 <option value="Weather & Light"></option>
                 <option value="Aerials"></option>
+                <option value="Mountains"></option>
+                <option value="Planes"></option>
+                <option value="Boats"></option>
+                <option value="Harbor"></option>
               </datalist>
             </div>
           </div>
@@ -521,31 +526,86 @@
       }
     }
 
+    const fileInput = document.getElementById("file");
+    const titleInput = document.getElementById("title");
+    const titleHint = document.getElementById("titleHint");
+    const fileHint = document.getElementById("fileHint");
+    const uploadBtn = document.getElementById("uploadBtn");
+
+    function syncFileUi() {
+      const n = fileInput.files ? fileInput.files.length : 0;
+      if (!n) {
+        fileHint.textContent = "No files selected";
+        titleHint.textContent = "(single file)";
+        titleInput.required = false;
+        titleInput.placeholder = "Thomas Basin at slack tide";
+        uploadBtn.textContent = "Upload photo";
+        return;
+      }
+      if (n === 1) {
+        fileHint.textContent = "1 file · " + fileInput.files[0].name;
+        titleHint.textContent = "(optional — defaults to filename)";
+        titleInput.required = false;
+        titleInput.placeholder = "Thomas Basin at slack tide";
+        uploadBtn.textContent = "Upload photo";
+      } else {
+        fileHint.textContent = n + " files selected · titles from filenames";
+        titleHint.textContent = "(ignored for bulk — filenames used)";
+        titleInput.required = false;
+        titleInput.placeholder = "Not used for bulk upload";
+        uploadBtn.textContent = "Upload " + n + " photos";
+      }
+    }
+    fileInput.addEventListener("change", syncFileUi);
+
     document.getElementById("uploadForm").addEventListener("submit", async (e) => {
       e.preventDefault();
       const btn = document.getElementById("uploadBtn");
-      const file = document.getElementById("file").files[0];
-      if (!file) return;
-      const fd = new FormData();
-      fd.append("file", file);
-      fd.append("title", document.getElementById("title").value);
-      fd.append("category", document.getElementById("category").value);
-      fd.append("coord", document.getElementById("coord").value);
-      fd.append("cond", document.getElementById("cond").value);
-      fd.append("whenShot", document.getElementById("whenShot").value);
-      fd.append("aspectRatio", document.getElementById("aspectRatio").value);
-      fd.append("forSale", document.getElementById("forSale").checked ? "true" : "false");
-      fd.append("published", document.getElementById("published").checked ? "true" : "false");
+      const files = Array.from(fileInput.files || []);
+      if (!files.length) return;
+      if (files.length > 40) {
+        setMsg(uploadMsg, "Maximum 40 files per upload", false);
+        return;
+      }
+
+      const shared = {
+        category: document.getElementById("category").value,
+        coord: document.getElementById("coord").value,
+        cond: document.getElementById("cond").value,
+        whenShot: document.getElementById("whenShot").value,
+        aspectRatio: document.getElementById("aspectRatio").value,
+        forSale: document.getElementById("forSale").checked ? "true" : "false",
+        published: document.getElementById("published").checked ? "true" : "false",
+      };
 
       btn.disabled = true;
-      setMsg(uploadMsg, "Uploading…", true);
       try {
-        const data = await api("/admin/photos", { method: "POST", body: fd });
-        setMsg(uploadMsg, "Uploaded #" + data.id + " — " + data.title, true);
+        if (files.length === 1) {
+          const fd = new FormData();
+          fd.append("file", files[0]);
+          fd.append("title", titleInput.value.trim());
+          Object.entries(shared).forEach(([k, v]) => fd.append(k, v));
+          setMsg(uploadMsg, "Uploading…", true);
+          const data = await api("/admin/photos", { method: "POST", body: fd });
+          setMsg(uploadMsg, "Uploaded #" + data.id + " — " + data.title, true);
+        } else {
+          const fd = new FormData();
+          files.forEach((f) => fd.append("files", f));
+          Object.entries(shared).forEach(([k, v]) => fd.append(k, v));
+          setMsg(uploadMsg, "Uploading " + files.length + " photos…", true);
+          const data = await api("/admin/photos/bulk", { method: "POST", body: fd });
+          const bits = ["Uploaded " + data.uploaded + " of " + files.length];
+          if (data.failed) bits.push(data.failed + " failed");
+          if (data.errors && data.errors.length) {
+            bits.push(data.errors.map((x) => x.file + ": " + x.error).join("\n"));
+          }
+          setMsg(uploadMsg, bits.join("\n"), data.uploaded > 0);
+        }
         e.target.reset();
         document.getElementById("forSale").checked = true;
         document.getElementById("published").checked = true;
         document.getElementById("aspectRatio").value = "1.25";
+        syncFileUi();
         await loadList();
       } catch (err) {
         setMsg(uploadMsg, err.message, false);

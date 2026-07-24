@@ -8,14 +8,26 @@ import {
   Patch,
   Post,
   UploadedFile,
+  UploadedFiles,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { AdminGuard } from './admin.guard';
 import { PhotosService } from './photos.service';
 import { UpdatePhotoDto } from './update-photo.dto';
 import { photoMulterOptions } from './upload.config';
+
+type UploadBody = {
+  title?: string;
+  category?: string;
+  coord?: string;
+  cond?: string;
+  whenShot?: string;
+  aspectRatio?: string;
+  forSale?: string;
+  published?: string;
+};
 
 @Controller()
 export class PhotosController {
@@ -40,19 +52,20 @@ export class PhotosController {
   @UseInterceptors(FileInterceptor('file', photoMulterOptions))
   upload(
     @UploadedFile() file: Express.Multer.File,
-    @Body()
-    body: {
-      title?: string;
-      category?: string;
-      coord?: string;
-      cond?: string;
-      whenShot?: string;
-      aspectRatio?: string;
-      forSale?: string;
-      published?: string;
-    },
+    @Body() body: UploadBody,
   ) {
     return this.photos.createFromUpload(file, body);
+  }
+
+  /** Admin: bulk upload (titles derived from each filename) */
+  @Post('admin/photos/bulk')
+  @UseGuards(AdminGuard)
+  @UseInterceptors(FilesInterceptor('files', 40, photoMulterOptions))
+  bulkUpload(
+    @UploadedFiles() files: Express.Multer.File[],
+    @Body() body: UploadBody,
+  ) {
+    return this.photos.createManyFromUpload(files, body);
   }
 
   @Patch('admin/photos/:id')
