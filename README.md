@@ -36,6 +36,7 @@ Point the site at the API — in `index.html`:
 
 ```js
 const CONFIG = {
+  apiBase: "http://localhost:3000",
   checkoutEndpoint: "http://localhost:3000/checkout",
   licenseEmail: "hello@ketchikanphotos.com",
 };
@@ -46,6 +47,17 @@ And in `order/success/index.html`, set the same host (no `/checkout`):
 ```js
 const API_BASE = "http://localhost:3000";
 ```
+
+### Upload photos for sale
+
+1. Open `/admin/` on the static site.
+2. Enter your API base URL and the `ADMIN_TOKEN` from `.env`.
+3. Upload a print-ready JPEG/PNG with title + category.
+4. Published photos appear in the gallery via `GET /photos` and are what
+   Stripe/Prodigi fulfill after checkout.
+
+On Railway, mount a persistent volume at `UPLOAD_DIR` (e.g. `/data/uploads`)
+so files survive redeploys, and set `PUBLIC_API_URL` to the public API origin.
 
 ## Environment
 
@@ -58,8 +70,11 @@ const API_BASE = "http://localhost:3000";
 | `PRODIGI_API_KEY` | Prodigi REST API key (`X-API-Key`) |
 | `PRODIGI_API_BASE` | Default sandbox: `https://api.sandbox.prodigi.com/v4.0` · live: `https://api.prodigi.com/v4.0` |
 | `PRODIGI_SHIPPING_METHOD` | e.g. `Standard`, `Budget` |
-| `PRINT_ASSET_BASE_URL` | Optional base for `{base}/{photoId}.jpg` print files |
+| `PRINT_ASSET_BASE_URL` | Optional base for `{base}/{photoId}.jpg` (legacy; prefer /admin uploads) |
 | `PRODIGI_FALLBACK_ASSET_URL` | Sandbox fallback image if per-photo URLs aren’t set yet |
+| `PUBLIC_API_URL` | Public API origin used in `/media/...` URLs for Prodigi |
+| `UPLOAD_DIR` | Disk path for uploads (use a Railway volume in prod) |
+| `ADMIN_TOKEN` | Bearer token for `/admin` photo upload API |
 
 Print-ready image URLs are resolved in this order
 (`server/src/photos.ts` → env base → fallback).

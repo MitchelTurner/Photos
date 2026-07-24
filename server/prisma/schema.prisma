@@ -49,3 +49,23 @@ model OrderItem {
   amount   Int
   sku      String
 }
+
+/// Gallery / print catalog photos uploaded via /admin
+model Photo {
+  id          Int      @id @default(autoincrement())
+  title       String
+  category    String
+  coord       String   @default("")
+  cond        String   @default("")
+  whenShot    String   @default("")
+  aspectRatio Float    @default(1.25)
+  toneA       String   @default("#12333a")
+  toneB       String   @default("#2a5a55")
+  filename    String
+  mimeType    String
+  forSale     Boolean  @default(true)
+  published   Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}

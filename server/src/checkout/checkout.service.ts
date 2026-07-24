@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import Stripe from 'stripe';
 import { CATALOG, CURRENCY, isSizeKey } from '../catalog';
+import { PhotosService } from '../photos/photos.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { CheckoutDto } from './dto';
 
@@ -8,7 +9,10 @@ import { CheckoutDto } from './dto';
 export class CheckoutService {
   private readonly stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly photos: PhotosService,
+  ) {}
 
   async createSession(dto: CheckoutDto): Promise<{ url: string }> {
     if (!process.env.STRIPE_SECRET_KEY) {
@@ -18,21 +22,23 @@ export class CheckoutService {
       throw new BadRequestException('SITE_URL is not configured');
     }
 
-    const normalized = dto.items.map((i) => {
+    const normalized = [];
+    for (const i of dto.items) {
       if (!isSizeKey(i.sizeKey)) {
         throw new BadRequestException(`Unknown print size: ${i.sizeKey}`);
       }
+      const photo = await this.photos.assertForSale(i.photoId);
       const opt = CATALOG[i.sizeKey];
-      return {
-        photoId: i.photoId,
-        title: i.title.trim() || `Photo ${i.photoId}`,
+      normalized.push({
+        photoId: photo.id,
+        title: photo.title,
         sizeKey: i.sizeKey,
         quantity: i.qty,
         amount: opt.amount,
         sku: opt.sku,
         label: opt.label,
-      };
-    });
+      });
+    }
 
     const order = await this.prisma.order.create({
       data: {

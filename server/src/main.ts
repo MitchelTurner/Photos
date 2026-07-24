@@ -1,9 +1,11 @@
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule } from './app.module';
+import { uploadDir } from './photos/upload.config';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, {
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     // Required so Stripe can verify webhook signatures against the raw body.
     rawBody: true,
   });
@@ -14,9 +16,20 @@ async function bootstrap() {
     .map((s) => s.trim())
     .filter(Boolean);
   app.enableCors({
-    origin: [siteUrl, ...extra, 'http://localhost:5500', 'http://127.0.0.1:5500'],
-    methods: ['GET', 'POST', 'OPTIONS'],
+    origin: [
+      siteUrl,
+      ...extra,
+      'http://localhost:5500',
+      'http://127.0.0.1:5500',
+      'http://localhost:3000',
+      'http://127.0.0.1:3000',
+    ],
+    methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Admin-Token'],
   });
+
+  // Public media for gallery + Prodigi asset download
+  app.useStaticAssets(uploadDir(), { prefix: '/media/' });
 
   app.useGlobalPipes(
     new ValidationPipe({

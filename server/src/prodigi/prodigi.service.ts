@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Order, OrderItem } from '@prisma/client';
-import { resolvePrintAssetUrl } from '../photos';
+import { PhotosService } from '../photos/photos.service';
 
 type OrderWithItems = Order & { items: OrderItem[] };
 
@@ -12,6 +12,8 @@ export type ProdigiCreateOrderResult = {
 @Injectable()
 export class ProdigiService {
   private readonly logger = new Logger(ProdigiService.name);
+
+  constructor(private readonly photos: PhotosService) {}
 
   private get baseUrl(): string {
     return (
@@ -39,14 +41,15 @@ export class ProdigiService {
       throw new Error('Order is missing shipping country/postal for Prodigi');
     }
 
-    const items = order.items.map((item) => {
-      const url = resolvePrintAssetUrl(item.photoId);
+    const items = [];
+    for (const item of order.items) {
+      const url = await this.photos.resolvePrintUrl(item.photoId);
       if (!url) {
         throw new Error(
-          `No print asset URL for photoId=${item.photoId}. Set PHOTO_ASSETS, PRINT_ASSET_BASE_URL, or PRODIGI_FALLBACK_ASSET_URL.`,
+          `No print asset URL for photoId=${item.photoId}. Upload the photo via /admin or set PRODIGI_FALLBACK_ASSET_URL.`,
         );
       }
-      return {
+      items.push({
         merchantReference: `${item.photoId}-${item.sizeKey}`,
         sku: item.sku,
         copies: item.quantity,
@@ -57,8 +60,8 @@ export class ProdigiService {
             url,
           },
         ],
-      };
-    });
+      });
+    }
 
     const body = {
       merchantReference: order.id,

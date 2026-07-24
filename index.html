@@ -545,45 +545,39 @@
 
 <script>
 /* =========================================================================
-   PHOTO DATA
-   -------------------------------------------------------------------------
-   To use your real photographs, add a `src` to any entry below (URL or a
-   relative path like "images/creek-street.jpg"). Until then, each frame
-   shows an intentional duotone placeholder so the layout stays composed.
-   `h` is the placeholder aspect ratio (height factor) so the masonry varies.
-   ========================================================================= */
-const PHOTOS = [
-  { id:1,  cat:"Harbor & Fleet", title:"Thomas Basin at slack tide", coord:"55.339°N 131.641°W", cond:"Overcast · 51°F · light rain", when:"06:14", h:1.28, tone:["#12333a","#2a5a55"], src:"" },
-  { id:2,  cat:"Creek Street",   title:"The boardwalk on its pilings", coord:"55.342°N 131.643°W", cond:"Fog · 48°F", when:"08:02", h:1.5,  tone:["#1c2e33","#7d5a3c"], src:"" },
-  { id:3,  cat:"Totem Poles",    title:"Saxman, cedar and paint", coord:"55.318°N 131.610°W", cond:"Broken cloud · 53°F", when:"11:20", h:1.34, tone:["#2a1512","#b04a30"], src:"" },
-  { id:4,  cat:"Misty Fjords",   title:"New Eddystone Rock", coord:"55.549°N 130.760°W", cond:"Low ceiling · 46°F", when:"09:41", h:1.15, tone:["#101f28","#39777f"], src:"" },
-  { id:5,  cat:"Wildlife",       title:"Bald eagle off the rocks", coord:"55.351°N 131.671°W", cond:"Drizzle · 49°F", when:"07:33", h:1.42, tone:["#182b2c","#8a9a8f"], src:"" },
-  { id:6,  cat:"Weather & Light",title:"Sun breaks over the Narrows", coord:"55.345°N 131.700°W", cond:"Clearing · 55°F", when:"18:57", h:1.2,  tone:["#241a12","#c9743f"], src:"" },
-  { id:7,  cat:"Harbor & Fleet", title:"Mending net on the deck", coord:"55.340°N 131.640°W", cond:"Rain · 50°F", when:"10:08", h:1.5,  tone:["#14282e","#3d6b64"], src:"" },
-  { id:8,  cat:"Aerials",        title:"Downtown & Pennock Island", coord:"55.344°N 131.646°W", cond:"Hazy · 54°F · from 400 ft", when:"13:22", h:1.1,  tone:["#122a2f","#4d8a82"], src:"" },
-  { id:9,  cat:"Creek Street",   title:"Married Man's Trail, wet cedar", coord:"55.343°N 131.642°W", cond:"Rain · 47°F", when:"15:46", h:1.36, tone:["#1a241f","#5c7048"], src:"" },
-  { id:10, cat:"Misty Fjords",   title:"Cliff walls, cloud on the water", coord:"55.560°N 130.780°W", cond:"Overcast · 45°F", when:"12:10", h:1.55, tone:["#0f1f26","#356b73"], src:"" },
-  { id:11, cat:"Weather & Light",title:"Float plane lifting at low tide", coord:"55.355°N 131.712°W", cond:"Broken cloud · 52°F", when:"08:49", h:1.18, tone:["#1d2733","#6f88a0"], src:"" },
-  { id:12, cat:"Wildlife",       title:"Sockeye holding in the creek", coord:"55.341°N 131.638°W", cond:"Rain · 49°F", when:"16:31", h:1.3,  tone:["#231512","#a83f2c"], src:"" },
-  { id:13, cat:"Harbor & Fleet", title:"Evening light on the hulls", coord:"55.338°N 131.643°W", cond:"Clearing · 53°F", when:"19:40", h:1.44, tone:["#1a1410","#c56b3a"], src:"" },
-  { id:14, cat:"Totem Poles",    title:"Clan house, Totem Bight", coord:"55.418°N 131.780°W", cond:"Overcast · 50°F", when:"14:05", h:1.24, tone:["#22160f","#8a5a34"], src:"" },
-  { id:15, cat:"Aerials",        title:"The fleet from above the basin", coord:"55.339°N 131.641°W", cond:"Drizzle · 48°F · from 350 ft", when:"11:58", h:1.5,  tone:["#12262b","#437d76"], src:"" },
-  { id:16, cat:"Weather & Light",title:"150 inches a year, in one frame", coord:"55.344°N 131.646°W", cond:"Heavy rain · 47°F", when:"17:12", h:1.32, tone:["#141d22","#4a6f78"], src:"" },
-];
-
-/* =========================================================================
    PRINT ORDER + CHECKOUT CONFIG
    -------------------------------------------------------------------------
-   checkoutEndpoint = NestJS POST /checkout (see /server). Leave "" for demo
-   mode: the cart works, but checkout stays disabled until the API is live.
-   The browser NEVER sends prices or secrets — server/src/catalog.ts owns both
-   Stripe amounts and Prodigi SKUs. After payment, the webhook submits the
-   order to Prodigi for print fulfillment.
+   apiBase           = NestJS origin (gallery + /admin uploads)
+   checkoutEndpoint  = POST /checkout on that API. Leave "" for demo mode.
+   Upload sale photos at /admin/ (ADMIN_TOKEN). Gallery loads GET /photos.
    ========================================================================= */
 const CONFIG = {
+  apiBase: "",                       // e.g. "http://localhost:3000" or Railway URL
   checkoutEndpoint: "",              // e.g. "http://localhost:3000/checkout"
   licenseEmail: "hello@ketchikanphotos.com",
 };
+
+/* Demo placeholders when the API has no published photos yet */
+const FALLBACK_PHOTOS = [
+  { id:1,  cat:"Harbor & Fleet", title:"Thomas Basin at slack tide", coord:"55.339°N 131.641°W", cond:"Overcast · 51°F · light rain", when:"06:14", h:1.28, tone:["#12333a","#2a5a55"], src:"", forSale:false },
+  { id:2,  cat:"Creek Street",   title:"The boardwalk on its pilings", coord:"55.342°N 131.643°W", cond:"Fog · 48°F", when:"08:02", h:1.5,  tone:["#1c2e33","#7d5a3c"], src:"", forSale:false },
+  { id:3,  cat:"Totem Poles",    title:"Saxman, cedar and paint", coord:"55.318°N 131.610°W", cond:"Broken cloud · 53°F", when:"11:20", h:1.34, tone:["#2a1512","#b04a30"], src:"", forSale:false },
+  { id:4,  cat:"Misty Fjords",   title:"New Eddystone Rock", coord:"55.549°N 130.760°W", cond:"Low ceiling · 46°F", when:"09:41", h:1.15, tone:["#101f28","#39777f"], src:"", forSale:false },
+  { id:5,  cat:"Wildlife",       title:"Bald eagle off the rocks", coord:"55.351°N 131.671°W", cond:"Drizzle · 49°F", when:"07:33", h:1.42, tone:["#182b2c","#8a9a8f"], src:"", forSale:false },
+  { id:6,  cat:"Weather & Light",title:"Sun breaks over the Narrows", coord:"55.345°N 131.700°W", cond:"Clearing · 55°F", when:"18:57", h:1.2,  tone:["#241a12","#c9743f"], src:"", forSale:false },
+  { id:7,  cat:"Harbor & Fleet", title:"Mending net on the deck", coord:"55.340°N 131.640°W", cond:"Rain · 50°F", when:"10:08", h:1.5,  tone:["#14282e","#3d6b64"], src:"", forSale:false },
+  { id:8,  cat:"Aerials",        title:"Downtown & Pennock Island", coord:"55.344°N 131.646°W", cond:"Hazy · 54°F · from 400 ft", when:"13:22", h:1.1,  tone:["#122a2f","#4d8a82"], src:"", forSale:false },
+  { id:9,  cat:"Creek Street",   title:"Married Man's Trail, wet cedar", coord:"55.343°N 131.642°W", cond:"Rain · 47°F", when:"15:46", h:1.36, tone:["#1a241f","#5c7048"], src:"", forSale:false },
+  { id:10, cat:"Misty Fjords",   title:"Cliff walls, cloud on the water", coord:"55.560°N 130.780°W", cond:"Overcast · 45°F", when:"12:10", h:1.55, tone:["#0f1f26","#356b73"], src:"", forSale:false },
+  { id:11, cat:"Weather & Light",title:"Float plane lifting at low tide", coord:"55.355°N 131.712°W", cond:"Broken cloud · 52°F", when:"08:49", h:1.18, tone:["#1d2733","#6f88a0"], src:"", forSale:false },
+  { id:12, cat:"Wildlife",       title:"Sockeye holding in the creek", coord:"55.341°N 131.638°W", cond:"Rain · 49°F", when:"16:31", h:1.3,  tone:["#231512","#a83f2c"], src:"", forSale:false },
+  { id:13, cat:"Harbor & Fleet", title:"Evening light on the hulls", coord:"55.338°N 131.643°W", cond:"Clearing · 53°F", when:"19:40", h:1.44, tone:["#1a1410","#c56b3a"], src:"", forSale:false },
+  { id:14, cat:"Totem Poles",    title:"Clan house, Totem Bight", coord:"55.418°N 131.780°W", cond:"Overcast · 50°F", when:"14:05", h:1.24, tone:["#22160f","#8a5a34"], src:"", forSale:false },
+  { id:15, cat:"Aerials",        title:"The fleet from above the basin", coord:"55.339°N 131.641°W", cond:"Drizzle · 48°F · from 350 ft", when:"11:58", h:1.5,  tone:["#12262b","#437d76"], src:"", forSale:false },
+  { id:16, cat:"Weather & Light",title:"150 inches a year, in one frame", coord:"55.344°N 131.646°W", cond:"Heavy rain · 47°F", when:"17:12", h:1.32, tone:["#141d22","#4a6f78"], src:"", forSale:false },
+];
+
+let PHOTOS = FALLBACK_PHOTOS.slice();
 
 /* Print sizes — display only. Prices in cents. The SERVER re-derives every
    price from server/src/catalog.ts by sizeKey; these are just for the UI. */
@@ -593,8 +587,6 @@ const PRINT_OPTIONS = [
   { key:"24x36", label:"24 × 36 in", sub:"metal / acrylic", price:28000 },
 ];
 const money = c => "$" + (c/100).toLocaleString("en-US",{minimumFractionDigits:(c%100?2:0),maximumFractionDigits:2});
-
-const CATS = ["All", ...Array.from(new Set(PHOTOS.map(p=>p.cat)))];
 
 /* ---------- build placeholder scene (duotone) ---------- */
 function sceneSVG(p){
@@ -615,48 +607,57 @@ function sceneSVG(p){
 </svg>`);
 }
 
-/* ---------- render filters ---------- */
 const filtersEl=document.getElementById('filters');
-CATS.forEach((c,i)=>{
-  const b=document.createElement('button');
-  b.className='filter';
-  b.setAttribute('aria-pressed', i===0?'true':'false');
-  b.dataset.cat=c;
-  const n = c==="All" ? PHOTOS.length : PHOTOS.filter(p=>p.cat===c).length;
-  b.innerHTML = `${c}<span class="ct">${n}</span>`;
-  b.addEventListener('click',()=>applyFilter(c,b));
-  filtersEl.appendChild(b);
-});
-
-/* ---------- render grid ---------- */
 const grid=document.getElementById('grid');
 function fieldnote(p){
-  return `<span><b>◎</b>${p.coord}</span><span><b>⌁</b>${p.cond}</span><span><b>◷</b>${p.when}</span>`;
+  const bits=[];
+  if(p.coord) bits.push(`<span><b>◎</b>${p.coord}</span>`);
+  if(p.cond) bits.push(`<span><b>⌁</b>${p.cond}</span>`);
+  if(p.when) bits.push(`<span><b>◷</b>${p.when}</span>`);
+  return bits.join("");
 }
-PHOTOS.forEach(p=>{
-  const card=document.createElement('article');
-  card.className='card';card.dataset.cat=p.cat;card.tabIndex=0;
-  card.setAttribute('role','button');
-  card.setAttribute('aria-label',`${p.title} — open`);
-  card.innerHTML=`
-    <div class="frame">
-      <img class="scene" src="${sceneSVG(p)}" alt="" aria-hidden="true">
-      ${p.src?`<img class="photo" alt="${p.title}, Ketchikan Alaska">`:''}
-      <span class="cat">${p.cat}</span>
-      <div class="plate">
-        <div class="t">${p.title}</div>
-        <div class="fieldnote">${fieldnote(p)}</div>
-      </div>
-    </div>`;
-  if(p.src){
-    const im=card.querySelector('img.photo');
-    im.addEventListener('load',()=>im.classList.add('loaded'));
-    im.src=p.src;
-  }
-  card.addEventListener('click',()=>openLB(p.id));
-  card.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openLB(p.id);}});
-  grid.appendChild(card);
-});
+
+function renderGallery(){
+  const CATS = ["All", ...Array.from(new Set(PHOTOS.map(p=>p.cat)))];
+  filtersEl.innerHTML="";
+  grid.innerHTML="";
+  CATS.forEach((c,i)=>{
+    const b=document.createElement('button');
+    b.className='filter';
+    b.setAttribute('aria-pressed', i===0?'true':'false');
+    b.dataset.cat=c;
+    const n = c==="All" ? PHOTOS.length : PHOTOS.filter(p=>p.cat===c).length;
+    b.innerHTML = `${c}<span class="ct">${n}</span>`;
+    b.addEventListener('click',()=>applyFilter(c,b));
+    filtersEl.appendChild(b);
+  });
+  PHOTOS.forEach(p=>{
+    const card=document.createElement('article');
+    card.className='card';card.dataset.cat=p.cat;card.tabIndex=0;
+    card.setAttribute('role','button');
+    card.setAttribute('aria-label',`${p.title} — open`);
+    card.innerHTML=`
+      <div class="frame">
+        <img class="scene" src="${sceneSVG(p)}" alt="" aria-hidden="true">
+        ${p.src?`<img class="photo" alt="${p.title}, Ketchikan Alaska">`:''}
+        <span class="cat">${p.cat}</span>
+        <div class="plate">
+          <div class="t">${p.title}</div>
+          <div class="fieldnote">${fieldnote(p)}</div>
+        </div>
+      </div>`;
+    if(p.src){
+      const im=card.querySelector('img.photo');
+      im.addEventListener('load',()=>im.classList.add('loaded'));
+      im.src=p.src;
+    }
+    card.addEventListener('click',()=>openLB(p.id));
+    card.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openLB(p.id);}});
+    grid.appendChild(card);
+  });
+  document.querySelectorAll('.card').forEach(c=>io.observe(c));
+  applyFilter("All", filtersEl.querySelector('.filter'));
+}
 
 /* ---------- filtering ---------- */
 let current="All";
@@ -676,7 +677,6 @@ function applyFilter(cat,btn){
 const io=new IntersectionObserver((es)=>{
   es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}});
 },{rootMargin:'0px 0px -8% 0px',threshold:.05});
-document.querySelectorAll('.card').forEach(c=>io.observe(c));
 
 /* ---------- lightbox ---------- */
 const lb=document.getElementById('lb'),
@@ -702,24 +702,29 @@ function renderLB(){
   const p=lbList[lbIdx];
   lbFrame.innerHTML = `<img class="scene" src="${sceneSVG({...p,h:0.68})}" alt="">`+
     (p.src?`<img class="photo" src="${p.src}" alt="${p.title}, Ketchikan Alaska">`:'');
+  const forSale = p.forSale !== false;
   const sizes = PRINT_OPTIONS.map(o=>`
-    <button class="size-opt" type="button" data-size="${o.key}" aria-pressed="${o.key===lbSize}">
+    <button class="size-opt" type="button" data-size="${o.key}" aria-pressed="${o.key===lbSize}" ${forSale?'':'disabled'}>
       ${o.label}<span class="pr">${money(o.price)}</span>
     </button>`).join("");
   lbCap.innerHTML = `
     <div class="cat">${p.cat}</div>
     <div class="t">${p.title}</div>
-    <div class="fieldnote"><b>◎</b> ${p.coord}<span></span><b>⌁</b> ${p.cond}<span></span><b>◷</b> ${p.when}</div>
+    <div class="fieldnote">${fieldnote(p)}</div>
     <div class="buy">
+      ${forSale?`
       <div class="sizes">${sizes}</div>
       <button class="add" type="button" id="lbAdd">Add print to order</button>
+      `:`<p class="lic">This frame is not listed for print sale.</p>`}
       <a class="lic" href="mailto:${CONFIG.licenseEmail}?subject=${encodeURIComponent('Licensing request: '+p.title)}">or license this image for commercial / editorial use →</a>
     </div>`;
-  lbCap.querySelectorAll('.size-opt').forEach(b=>b.addEventListener('click',()=>{
-    lbSize=b.dataset.size;
-    lbCap.querySelectorAll('.size-opt').forEach(x=>x.setAttribute('aria-pressed', x===b));
-  }));
-  lbCap.querySelector('#lbAdd').addEventListener('click',()=>addToCart(p,lbSize));
+  if(forSale){
+    lbCap.querySelectorAll('.size-opt').forEach(b=>b.addEventListener('click',()=>{
+      lbSize=b.dataset.size;
+      lbCap.querySelectorAll('.size-opt').forEach(x=>x.setAttribute('aria-pressed', x===b));
+    }));
+    lbCap.querySelector('#lbAdd').addEventListener('click',()=>addToCart(p,lbSize));
+  }
   lbCount.textContent = `${String(lbIdx+1).padStart(2,'0')} / ${String(lbList.length).padStart(2,'0')}`;
 }
 function closeLB(){lb.classList.remove('open');document.body.style.overflow='';}
@@ -840,6 +845,28 @@ document.querySelectorAll('.cta-row .btn').forEach(b=>{
 });
 
 document.getElementById('yr').textContent=new Date().getFullYear();
+
+/* Load published photos from the API (uploaded via /admin). Fall back to demos. */
+async function bootGallery(){
+  const base = (CONFIG.apiBase || (CONFIG.checkoutEndpoint||"").replace(/\/checkout\/?$/,"" )).replace(/\/$/,"");
+  if(base){
+    try{
+      const res = await fetch(base + "/photos");
+      if(res.ok){
+        const rows = await res.json();
+        if(Array.isArray(rows) && rows.length){
+          PHOTOS = rows.map(p=>({
+            id:p.id, cat:p.cat, title:p.title, coord:p.coord||"", cond:p.cond||"",
+            when:p.when||"", h:p.h||1.25, tone:p.tone||["#12333a","#2a5a55"],
+            src:p.src||"", forSale:p.forSale!==false
+          }));
+        }
+      }
+    }catch(_){ /* keep fallback */ }
+  }
+  renderGallery();
+}
+bootGallery();
 </script>
 </body>
 </html>
