@@ -59,29 +59,50 @@ Optional: still mount a volume at `/data/uploads` as a local cache (`UPLOAD_DIR=
 - Admin: `https://YOUR-SERVICE.up.railway.app/admin/`
 - Stripe webhook: `https://YOUR-SERVICE.up.railway.app/webhook/stripe`
 
-## 4. Your photos are on Railway — not old SiteGround HTML
+## 4. Why photos show on Railway but not ketchikanphotos.com
 
-**Working gallery right now:** `https://phot-api.up.railway.app/`
+**Working gallery:** `https://phot-api.up.railway.app/` (serves current `index.html` + `/photos`)
 
-`https://ketchikanphotos.com` is still serving an **old** SiteGround `index.html` with
-hardcoded placeholder frames (`src: ""`) and **no** call to `GET /photos`. Uploading in
-`/admin` cannot fix that domain until the file is replaced or DNS points at Railway.
+**Broken domain:** `https://ketchikanphotos.com` still serves a **July 2026 SiteGround file**
+with hardcoded `const PHOTOS = […]` and empty `src:""`. That page never calls the API, so
+admin uploads cannot appear there until you sync or move DNS.
+
+Quick check — View Source on the domain. You want `bootGallery` / `apiBase`. If you see
+`const PHOTOS = [` with `src:""`, SiteGround is stale.
 
 ### Option A — Point the domain at Railway (recommended)
 
-1. Railway service → **Settings → Networking → Custom Domain** → add `ketchikanphotos.com` and `www`
-2. At your DNS host, set the records Railway shows (usually CNAME or ALIAS to `*.up.railway.app`)
-3. Set `SITE_URL=https://ketchikanphotos.com` on Railway
+1. Railway → service → **Settings → Networking → Custom Domain** → `ketchikanphotos.com` + `www`
+2. At DNS, add the CNAME/ALIAS Railway shows (replace the SiteGround A record `35.215.126.117`)
+3. Set Railway `SITE_URL=https://ketchikanphotos.com`
 
-### Option B — Replace SiteGround’s `index.html`
+### Option B — Manual SiteGround upload (fastest if you keep SiteGround hosting)
 
-1. Download `index.html` from GitHub `main` (repo root)
+1. From GitHub `main`, download:
+   - `index.html`
+   - `admin/` (folder)
+   - `order/` (folder)
 2. SiteGround → **Site Tools → File Manager** → `public_html`
-3. Replace `index.html` (and ideally `admin/`, `order/` too)
-4. Hard-refresh the browser (`Cmd+Shift+R`)
+3. Replace those files (overwrite `index.html`)
+4. Hard-refresh (`Cmd+Shift+R` / Ctrl+Shift+R)
 
-Confirm the live file contains `bootGallery` and `apiBase` — if you still see
-`const PHOTOS = [` with empty `src:""`, SiteGround was not updated.
+The synced `index.html` loads photos from `https://phot-api.up.railway.app/photos`.
+
+### Option C — Auto-deploy SiteGround over FTP (GitHub Actions)
+
+Workflow: `.github/workflows/deploy-siteground.yml`
+
+Add repo secrets:
+
+| Secret | Example |
+|--------|---------|
+| `SITEGROUND_FTP_SERVER` | `ftp.ketchikanphotos.com` |
+| `SITEGROUND_FTP_USERNAME` | from Site Tools → FTP |
+| `SITEGROUND_FTP_PASSWORD` | FTP password |
+| `SITEGROUND_FTP_SERVER_DIR` | `public_html/` (optional) |
+
+Then **Actions → Deploy static site to SiteGround → Run workflow**, or push changes to
+`index.html` / `admin/` / `order/` on `main`.
 
 ## Why not Nixpacks alone?
 

@@ -1,4 +1,12 @@
 <!DOCTYPE html>
+<!--
+  SITEGROUND SYNC
+  ----------------
+  If this file is missing bootGallery() / apiBase, you are on an OLD SiteGround
+  copy and the gallery will NOT show Railway uploads. Replace public_html/index.html
+  from GitHub main (and admin/, order/), or point DNS at Railway — see RAILWAY.md.
+  Working gallery today: https://phot-api.up.railway.app/
+-->
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
@@ -839,7 +847,6 @@ function renderLB(){
   if(forSale){
     lbCap.querySelectorAll('.size-opt').forEach(b=>b.addEventListener('click',()=>{
       lbSize=b.dataset.size;
-      lbCap.querySelectorAll('.size-opt').forEach(x=>x.setAttribute('aria-pressed', x===b?' [true]':'false'.replace(' [true]', 'true')));
       lbCap.querySelectorAll('.size-opt').forEach(x=>x.setAttribute('aria-pressed', x===b ? 'true' : 'false'));
     }));
     lbCap.querySelector('#lbAdd').addEventListener('click',()=>addToCart(p,lbSize));

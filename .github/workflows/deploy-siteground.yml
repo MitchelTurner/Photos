@@ -1,0 +1,81 @@
+# Deploy the static gallery to SiteGround over FTP whenever main changes.
+#
+# Why this exists:
+#   ketchikanphotos.com is hosted on SiteGround. If that host keeps an old
+#   index.html (hardcoded PHOTOS with empty src), the gallery never calls the
+#   Railway API — so photos only appear on https://phot-api.up.railway.app/.
+#
+# One-time setup (GitHub → Settings → Secrets and variables → Actions):
+#   SITEGROUND_FTP_SERVER    e.g. ftp.ketchikanphotos.com  (SiteGround → Site Tools → FTP)
+#   SITEGROUND_FTP_USERNAME  FTP username
+#   SITEGROUND_FTP_PASSWORD  FTP password
+#   SITEGROUND_FTP_SERVER_DIR  usually  public_html/  or  /home/<user>/www/ketchikanphotos.com/public_html/
+#
+# Then either push to main (paths below) or run this workflow manually.
+# Until secrets are set, use the manual File Manager steps in RAILWAY.md.
+
+name: Deploy static site to SiteGround
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "index.html"
+      - "admin/**"
+      - "order/**"
+      - ".github/workflows/deploy-siteground.yml"
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: FTP upload to public_html
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Require FTP secrets
+        env:
+          SERVER: ${{ secrets.SITEGROUND_FTP_SERVER }}
+          USER: ${{ secrets.SITEGROUND_FTP_USERNAME }}
+          PASS: ${{ secrets.SITEGROUND_FTP_PASSWORD }}
+        run: |
+          if [ -z "$SERVER" ] || [ -z "$USER" ] || [ -z "$PASS" ]; then
+            echo "::error::Missing SiteGround FTP secrets. Add SITEGROUND_FTP_SERVER, SITEGROUND_FTP_USERNAME, SITEGROUND_FTP_PASSWORD (and optionally SITEGROUND_FTP_SERVER_DIR) under repo Settings → Secrets. Until then, upload index.html manually — see RAILWAY.md."
+            exit 1
+          fi
+
+      - name: Resolve FTP server directory
+        id: dir
+        env:
+          DIR: ${{ secrets.SITEGROUND_FTP_SERVER_DIR }}
+        run: |
+          if [ -n "$DIR" ]; then
+            echo "server_dir=$DIR" >> "$GITHUB_OUTPUT"
+          else
+            echo "server_dir=public_html/" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Deploy gallery files
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.SITEGROUND_FTP_SERVER }}
+          username: ${{ secrets.SITEGROUND_FTP_USERNAME }}
+          password: ${{ secrets.SITEGROUND_FTP_PASSWORD }}
+          server-dir: ${{ steps.dir.outputs.server_dir }}
+          local-dir: ./
+          dangerous-clean-slate: false
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/.github/**
+            **/server/**
+            **/node_modules/**
+            **/RAILWAY.md
+            **/README.md
+            **/nixpacks.toml
+            **/railway.toml
+            **/package.json
+            **/package-lock.json
+            **/.node-version
+            **/.gitignore
