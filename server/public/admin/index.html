@@ -75,7 +75,7 @@
       margin: 0 0 .35rem;
       color: #3a4d52;
     }
-    input[type="text"], input[type="password"], input[type="email"], input[type="number"], input[type="url"] {
+    input[type="text"], input[type="password"], input[type="email"], input[type="number"], input[type="url"], textarea {
       width: 100%;
       border: 1px solid var(--line);
       border-radius: 4px;
@@ -84,6 +84,7 @@
       background: #fff;
       margin-bottom: .9rem;
     }
+    textarea { min-height: 5.5rem; resize: vertical; line-height: 1.45; }
     input[type="file"] { margin-bottom: .9rem; width: 100%; }
     .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; }
     @media (max-width: 640px) { .row2 { grid-template-columns: 1fr; } }
@@ -166,6 +167,41 @@
     }
     .api-status.ok { color: var(--ok); }
     .api-status.bad { color: var(--salmon); }
+    .modal-backdrop {
+      position: fixed; inset: 0; z-index: 80;
+      background: rgba(20,36,40,.45); backdrop-filter: blur(3px);
+      display: none; align-items: flex-start; justify-content: center;
+      padding: 1.25rem; overflow-y: auto;
+    }
+    .modal-backdrop.show { display: flex; }
+    .modal {
+      width: min(640px, 100%);
+      margin: 1.5rem auto 2rem;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 1.25rem 1.35rem 1.4rem;
+      box-shadow: 0 24px 60px -28px rgba(0,0,0,.45);
+    }
+    .modal-head {
+      display: flex; justify-content: space-between; align-items: baseline;
+      gap: 1rem; margin-bottom: 1rem;
+    }
+    .modal-head h2 { margin: 0; }
+    .modal-actions { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .35rem; }
+    .modal-preview {
+      display: flex; gap: .85rem; align-items: center;
+      margin-bottom: 1rem; padding-bottom: .9rem;
+      border-bottom: 1px solid var(--line);
+    }
+    .modal-preview img {
+      width: 112px; height: 84px; object-fit: cover; border-radius: 4px; background: #d7e0e2;
+    }
+    .char-hint {
+      font-family: "Space Mono", monospace;
+      font-size: .62rem; letter-spacing: .04em;
+      color: #6a7c81; margin: -.55rem 0 .75rem;
+    }
   </style>
 </head>
 <body>
@@ -272,6 +308,70 @@
       </section>
 
       <p style="margin-top:1rem"><button type="button" class="secondary" id="logoutBtn">Sign out</button></p>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="editModal" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="editTitle">
+      <div class="modal-head">
+        <h2 id="editTitle">Edit photo</h2>
+        <button type="button" class="secondary" id="editClose">Close</button>
+      </div>
+      <div class="modal-preview">
+        <img id="editThumb" alt="" />
+        <div>
+          <p class="meta" id="editMeta" style="margin:0"></p>
+          <p class="hint" style="margin:.4rem 0 0">Edit any AI-generated or manual copy, then save.</p>
+        </div>
+      </div>
+      <form id="editForm">
+        <input type="hidden" id="editId" />
+        <div class="row2">
+          <div>
+            <label for="editTitleField">Title</label>
+            <input id="editTitleField" type="text" required maxlength="120" />
+          </div>
+          <div>
+            <label for="editCategory">Category</label>
+            <input id="editCategory" type="text" list="cats" required />
+          </div>
+        </div>
+        <label for="editDescription">Description (lightbox caption)</label>
+        <textarea id="editDescription" maxlength="800" placeholder="2–3 sentences visitors see when they open the photo"></textarea>
+        <p class="char-hint" id="editDescCount"></p>
+        <label for="editAlt">Alt text (accessibility + SEO)</label>
+        <input id="editAlt" type="text" maxlength="200" placeholder="What is visibly in the frame" />
+        <label for="editSeoTitle">SEO title</label>
+        <input id="editSeoTitle" type="text" maxlength="80" placeholder="~60 characters for search snippets" />
+        <p class="char-hint" id="editSeoTitleCount"></p>
+        <label for="editSeoDescription">SEO description</label>
+        <textarea id="editSeoDescription" maxlength="200" placeholder="~140–155 characters for search results"></textarea>
+        <p class="char-hint" id="editSeoDescCount"></p>
+        <label for="editKeywords">Keywords</label>
+        <input id="editKeywords" type="text" maxlength="300" placeholder="comma-separated: ketchikan, bald eagle, misty fjords" />
+        <div class="row2">
+          <div>
+            <label for="editCoord">Coordinates</label>
+            <input id="editCoord" type="text" maxlength="80" />
+          </div>
+          <div>
+            <label for="editWhen">Time of day</label>
+            <input id="editWhen" type="text" maxlength="40" />
+          </div>
+        </div>
+        <label for="editCond">Conditions</label>
+        <input id="editCond" type="text" maxlength="160" />
+        <div class="checks">
+          <label><input type="checkbox" id="editForSale" /> For sale</label>
+          <label><input type="checkbox" id="editPublished" /> Published</label>
+        </div>
+        <div class="modal-actions">
+          <button type="submit" id="editSave">Save changes</button>
+          <button type="button" class="secondary" id="editAi">Re-run AI</button>
+          <button type="button" class="secondary" id="editCancel">Cancel</button>
+        </div>
+        <p class="msg" id="editMsg"></p>
+      </form>
     </div>
   </div>
 
