@@ -42,6 +42,9 @@ export class AdminPageController {
           'Admin UI missing from deploy. Ensure server/public/admin/index.html is included.',
       });
     }
+    // Always serve the latest admin UI after deploys (browsers / CDNs otherwise keep AI-only HTML).
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
+    res.setHeader('Pragma', 'no-cache');
     return res.sendFile(file);
   }
 }

@@ -149,7 +149,15 @@ async function bootstrap() {
   // ---- Static marketing / admin UI ------------------------------------------
   const publicDir = resolvePublicDir();
   if (publicDir) {
-    app.useStaticAssets(publicDir, { index: 'index.html' });
+    app.useStaticAssets(publicDir, {
+      index: 'index.html',
+      setHeaders: (res, filePath) => {
+        // Admin HTML changes often (Edit text / AI). Do not let browsers keep a stale copy.
+        if (/[/\\]admin[/\\]/i.test(filePath)) {
+          res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
+        }
+      },
+    });
     // eslint-disable-next-line no-console
     console.log(`Site UI from ${publicDir}`);
   } else {

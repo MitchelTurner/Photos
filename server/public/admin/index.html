@@ -4,6 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Admin — Ketchikan Photos</title>
+  <meta name="kp-admin-ui" content="edit-text-v2" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Space+Mono:wght@400;700&family=Source+Sans+3:wght@400;600&display=swap" rel="stylesheet" />
@@ -321,7 +322,7 @@
         <img id="editThumb" alt="" />
         <div>
           <p class="meta" id="editMeta" style="margin:0"></p>
-          <p class="hint" style="margin:.4rem 0 0">Edit any AI-generated or manual copy, then save.</p>
+          <p class="hint" style="margin:.4rem 0 0">After AI describe, tweak any field here, then <b>Save changes</b> — nothing is locked.</p>
         </div>
       </div>
       <form id="editForm">
@@ -665,17 +666,38 @@
       setMsg(editMsg, "", true);
     }
 
-    function openEdit(id) {
+    /** Overlay Claude draft fields onto the open editor (all fields stay editable). */
+    function applyDraftToForm(draft) {
+      if (!draft) return;
+      if (draft.title != null) document.getElementById("editTitleField").value = draft.title;
+      if (draft.category != null) document.getElementById("editCategory").value = draft.category;
+      if (draft.description != null) document.getElementById("editDescription").value = draft.description;
+      if (draft.altText != null) document.getElementById("editAlt").value = draft.altText;
+      if (draft.seoTitle != null) document.getElementById("editSeoTitle").value = draft.seoTitle;
+      if (draft.seoDescription != null) document.getElementById("editSeoDescription").value = draft.seoDescription;
+      if (draft.keywords != null) document.getElementById("editKeywords").value = draft.keywords;
+      if (draft.coord != null && draft.coord) document.getElementById("editCoord").value = draft.coord;
+      if (draft.whenShot != null && draft.whenShot) document.getElementById("editWhen").value = draft.whenShot;
+      if (draft.cond != null && draft.cond) document.getElementById("editCond").value = draft.cond;
+      countHint(document.getElementById("editDescCount"), document.getElementById("editDescription").value, 400);
+      countHint(document.getElementById("editSeoTitleCount"), document.getElementById("editSeoTitle").value, 60);
+      countHint(document.getElementById("editSeoDescCount"), document.getElementById("editSeoDescription").value, 155);
+      document.getElementById("editMeta").textContent =
+        "#" + document.getElementById("editId").value + " · AI draft — edit then Save";
+    }
+
+    function openEdit(id, draft) {
       const p = photosById[String(id)];
       if (!p) {
         alert("Photo not loaded — refresh the list");
         return;
       }
       fillEditForm(p);
+      if (draft) applyDraftToForm(draft);
       editModal.classList.add("show");
       editModal.setAttribute("aria-hidden", "false");
       document.body.style.overflow = "hidden";
-      document.getElementById("editTitleField").focus();
+      document.getElementById("editDescription").focus();
     }
 
     function closeEdit() {
@@ -748,13 +770,15 @@
       btn.disabled = true;
       setMsg(editMsg, "Claude is rewriting copy…", true);
       try {
-        await api("/admin/photos/" + id + "/enrich", {
+        const out = await api("/admin/photos/" + id + "/enrich", {
           method: "POST",
           json: { apply: true, overwriteTitle: true, overwriteCategory: true },
         });
         await loadList();
         if (photosById[String(id)]) fillEditForm(photosById[String(id)]);
-        setMsg(editMsg, "AI updated — review and Save if you tweak further", true);
+        applyDraftToForm(out.draft);
+        setMsg(editMsg, "AI draft loaded — edit any field, then Save changes", true);
+        document.getElementById("editDescription").focus();
       } catch (err) {
         setMsg(editMsg, err.message, false);
       } finally {
@@ -783,11 +807,12 @@
           });
           setMsg(
             document.getElementById("aiMsg"),
-            "Updated #" + id + " — " + (out.draft && out.draft.title ? out.draft.title : "ok") + ". Review in Edit text.",
+            "AI wrote copy for #" + id + " — edit below, then Save changes.",
             true,
           );
           await loadList();
-          openEdit(id);
+          openEdit(id, out.draft);
+          setMsg(editMsg, "AI draft ready — edit any field, then Save changes", true);
           return;
         } else if (act === "sale") {
           await api("/admin/photos/" + id, {
@@ -814,9 +839,9 @@
       try {
         const st = await api("/admin/ai/status");
         if (st.configured) {
-          el.innerHTML = "Claude Vision ready (<code>" + escapeHtml(st.model) + "</code>). Use <b>AI describe</b>, then <b>Edit text</b> to tweak any field before it stays live.";
+          el.innerHTML = "Claude Vision ready (<code>" + escapeHtml(st.model) + "</code>). <b>AI describe</b> opens an editor so you can change title, caption, alt, and SEO, then <b>Save changes</b>. Or click <b>Edit text</b> anytime.";
         } else {
-          el.innerHTML = "Set Railway variable <code>ANTHROPIC_API_KEY</code> (from console.anthropic.com), redeploy, then AI describe. You can always <b>Edit text</b> manually.";
+          el.innerHTML = "Set Railway variable <code>ANTHROPIC_API_KEY</code> (from console.anthropic.com), redeploy, then AI describe. Use <b>Edit text</b> anytime to change titles and captions by hand.";
         }
       } catch (_) { /* ignore before login */ }
     }
@@ -832,7 +857,11 @@
           method: "POST",
           json: { onlyMissing: true, limit: 25, overwriteTitle: true, overwriteCategory: true },
         });
-        setMsg(msg, "AI enrich done — " + out.succeeded + " ok, " + out.failed + " failed (of " + out.processed + ")", out.failed === 0);
+        setMsg(
+          msg,
+          "AI enrich done — " + out.succeeded + " ok, " + out.failed + " failed (of " + out.processed + "). Click Edit text on any photo to revise the AI copy.",
+          out.failed === 0,
+        );
         await loadList();
       } catch (err) {
         setMsg(msg, err.message, false);
