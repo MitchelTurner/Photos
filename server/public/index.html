@@ -322,6 +322,7 @@
     width:fit-content;max-width:100%;
     max-height:min(58vh, calc(100dvh - 300px));
     border-radius:4px;overflow:hidden;
+    background:#071012; /* letterbox when photo aspect ≠ frame */
     box-shadow:0 30px 80px -20px rgba(0,0,0,.7);
   }
   .lb-frame .scene{
@@ -330,7 +331,8 @@
     max-width:min(1100px,92vw);
     max-height:min(58vh, calc(100dvh - 300px));
   }
-  .lb-frame img.photo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+  /* Full photograph in the closer look (grid cards still use cover). */
+  .lb-frame img.photo{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
   .lb-panel{width:min(1100px,100%);margin:0 auto;color:var(--fog);min-width:0}
   .lb-cap{width:100%;color:var(--fog)}
   .lb-cap .cat{font-family:"Space Mono",monospace;font-size:.66rem;letter-spacing:.14em;text-transform:uppercase;color:var(--verdigris)}
@@ -828,7 +830,8 @@ function openLB(id){
 let lbSize = PRINT_OPTIONS[0].key;
 function renderLB(){
   const p=lbList[lbIdx];
-  lbFrame.innerHTML = `<img class="scene" src="${sceneSVG({...p,h:0.68})}" alt="">`+
+  /* Use the photo's real aspect (p.h) so contain shows the whole frame, not a forced crop box. */
+  lbFrame.innerHTML = `<img class="scene" src="${sceneSVG(p)}" alt="">`+
     (p.src?`<img class="photo" src="${p.src}" alt="${escapeAttr(p.alt || (p.title + ', Ketchikan Alaska'))}">`:'');
   const forSale = p.forSale !== false;
   const sizes = PRINT_OPTIONS.map(o=>`
