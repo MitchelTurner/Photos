@@ -427,9 +427,17 @@
 
     let sessionToken = sessionStorage.getItem("kp_session") || "";
     let apiReady = false;
+    /** @type {Record<string, any>} */
+    let photosById = {};
 
     function apiBase() {
       return (apiInput.value || "").trim().replace(/\/$/, "");
+    }
+
+    function countHint(el, value, softMax) {
+      if (!el) return;
+      const n = (value || "").length;
+      el.textContent = n + (softMax ? " / ~" + softMax + " chars" : " chars");
     }
 
     function authHeaders(json) {
@@ -586,6 +594,8 @@
       listEl.innerHTML = "<p class='empty'>Loading…</p>";
       try {
         const rows = await api("/admin/photos");
+        photosById = {};
+        rows.forEach((p) => { photosById[String(p.id)] = p; });
         if (!rows.length) {
           listEl.innerHTML = "<p class='empty'>No photos yet — upload your first print above.</p>";
           return;
@@ -609,6 +619,7 @@
               ${p.seoDescription ? `<p class="meta" style="margin-top:.25rem">SEO · ${escapeHtml(p.seoDescription)}</p>` : ""}
             </div>
             <div class="actions">
+              <button type="button" class="secondary" data-act="edit">Edit text</button>
               <button type="button" class="secondary" data-act="ai" ${p.fileMissing ? "disabled" : ""}>AI describe</button>
               <button type="button" class="secondary" data-act="sale">${p.forSale ? "Unlist sale" : "List for sale"}</button>
               <button type="button" class="secondary" data-act="pub">${p.published ? "Unpublish" : "Publish"}</button>
@@ -628,10 +639,137 @@
       }
     }
 
+    const editModal = document.getElementById("editModal");
+    const editForm = document.getElementById("editForm");
+    const editMsg = document.getElementById("editMsg");
+
+    function fillEditForm(p) {
+      document.getElementById("editId").value = String(p.id);
+      document.getElementById("editTitleField").value = p.title || "";
+      document.getElementById("editCategory").value = p.cat || "";
+      document.getElementById("editDescription").value = p.description || "";
+      document.getElementById("editAlt").value = p.alt || "";
+      document.getElementById("editSeoTitle").value = p.seoTitle || "";
+      document.getElementById("editSeoDescription").value = p.seoDescription || "";
+      document.getElementById("editKeywords").value = p.keywords || "";
+      document.getElementById("editCoord").value = p.coord || "";
+      document.getElementById("editWhen").value = p.when || "";
+      document.getElementById("editCond").value = p.cond || "";
+      document.getElementById("editForSale").checked = p.forSale !== false;
+      document.getElementById("editPublished").checked = p.published !== false;
+      document.getElementById("editThumb").src = p.fileMissing ? "" : (p.src || "");
+      document.getElementById("editMeta").textContent = "#" + p.id + (p.aiEnrichedAt ? " · AI enriched" : " · manual");
+      countHint(document.getElementById("editDescCount"), p.description || "", 400);
+      countHint(document.getElementById("editSeoTitleCount"), p.seoTitle || "", 60);
+      countHint(document.getElementById("editSeoDescCount"), p.seoDescription || "", 155);
+      setMsg(editMsg, "", true);
+    }
+
+    function openEdit(id) {
+      const p = photosById[String(id)];
+      if (!p) {
+        alert("Photo not loaded — refresh the list");
+        return;
+      }
+      fillEditForm(p);
+      editModal.classList.add("show");
+      editModal.setAttribute("aria-hidden", "false");
+      document.body.style.overflow = "hidden";
+      document.getElementById("editTitleField").focus();
+    }
+
+    function closeEdit() {
+      editModal.classList.remove("show");
+      editModal.setAttribute("aria-hidden", "true");
+      document.body.style.overflow = "";
+      setMsg(editMsg, "", true);
+    }
+
+    ["editDescription", "editSeoTitle", "editSeoDescription"].forEach((id) => {
+      const soft = id === "editDescription" ? 400 : id === "editSeoTitle" ? 60 : 155;
+      const hint = id === "editDescription"
+        ? "editDescCount"
+        : id === "editSeoTitle"
+          ? "editSeoTitleCount"
+          : "editSeoDescCount";
+      document.getElementById(id).addEventListener("input", (e) => {
+        countHint(document.getElementById(hint), e.target.value, soft);
+      });
+    });
+
+    document.getElementById("editClose").addEventListener("click", closeEdit);
+    document.getElementById("editCancel").addEventListener("click", closeEdit);
+    editModal.addEventListener("click", (e) => {
+      if (e.target === editModal) closeEdit();
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && editModal.classList.contains("show")) closeEdit();
+    });
+
+    editForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const id = document.getElementById("editId").value;
+      const btn = document.getElementById("editSave");
+      btn.disabled = true;
+      setMsg(editMsg, "Saving…", true);
+      try {
+        const updated = await api("/admin/photos/" + id, {
+          method: "PATCH",
+          json: {
+            title: document.getElementById("editTitleField").value.trim(),
+            category: document.getElementById("editCategory").value.trim(),
+            description: document.getElementById("editDescription").value.trim(),
+            altText: document.getElementById("editAlt").value.trim(),
+            seoTitle: document.getElementById("editSeoTitle").value.trim(),
+            seoDescription: document.getElementById("editSeoDescription").value.trim(),
+            keywords: document.getElementById("editKeywords").value.trim(),
+            coord: document.getElementById("editCoord").value.trim(),
+            whenShot: document.getElementById("editWhen").value.trim(),
+            cond: document.getElementById("editCond").value.trim(),
+            forSale: document.getElementById("editForSale").checked,
+            published: document.getElementById("editPublished").checked,
+          },
+        });
+        setMsg(editMsg, "Saved #" + id, true);
+        setMsg(document.getElementById("aiMsg"), "Saved edits for #" + id + " — " + (updated.title || ""), true);
+        await loadList();
+        // Keep modal open with fresh data so further tweaks are easy
+        if (photosById[String(id)]) fillEditForm(photosById[String(id)]);
+      } catch (err) {
+        setMsg(editMsg, err.message, false);
+      } finally {
+        btn.disabled = false;
+      }
+    });
+
+    document.getElementById("editAi").addEventListener("click", async () => {
+      const id = document.getElementById("editId").value;
+      const btn = document.getElementById("editAi");
+      btn.disabled = true;
+      setMsg(editMsg, "Claude is rewriting copy…", true);
+      try {
+        await api("/admin/photos/" + id + "/enrich", {
+          method: "POST",
+          json: { apply: true, overwriteTitle: true, overwriteCategory: true },
+        });
+        await loadList();
+        if (photosById[String(id)]) fillEditForm(photosById[String(id)]);
+        setMsg(editMsg, "AI updated — review and Save if you tweak further", true);
+      } catch (err) {
+        setMsg(editMsg, err.message, false);
+      } finally {
+        btn.disabled = false;
+      }
+    });
+
     async function onAction(btn) {
       const item = btn.closest(".item");
       const id = item.dataset.id;
       const act = btn.dataset.act;
+      if (act === "edit") {
+        openEdit(id);
+        return;
+      }
       btn.disabled = true;
       try {
         if (act === "del") {
@@ -645,9 +783,12 @@
           });
           setMsg(
             document.getElementById("aiMsg"),
-            "Updated #" + id + " — " + (out.draft && out.draft.title ? out.draft.title : "ok"),
+            "Updated #" + id + " — " + (out.draft && out.draft.title ? out.draft.title : "ok") + ". Review in Edit text.",
             true,
           );
+          await loadList();
+          openEdit(id);
+          return;
         } else if (act === "sale") {
           await api("/admin/photos/" + id, {
             method: "PATCH",
@@ -673,9 +814,9 @@
       try {
         const st = await api("/admin/ai/status");
         if (st.configured) {
-          el.innerHTML = "Claude Vision ready (<code>" + escapeHtml(st.model) + "</code>). Use <b>AI describe</b> per photo or <b>AI enrich missing</b> for the whole library.";
+          el.innerHTML = "Claude Vision ready (<code>" + escapeHtml(st.model) + "</code>). Use <b>AI describe</b>, then <b>Edit text</b> to tweak any field before it stays live.";
         } else {
-          el.innerHTML = "Set Railway variable <code>ANTHROPIC_API_KEY</code> (from console.anthropic.com), redeploy, then use AI describe / AI enrich missing.";
+          el.innerHTML = "Set Railway variable <code>ANTHROPIC_API_KEY</code> (from console.anthropic.com), redeploy, then AI describe. You can always <b>Edit text</b> manually.";
         }
       } catch (_) { /* ignore before login */ }
     }
