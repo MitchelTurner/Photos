@@ -38,10 +38,12 @@ import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import cookieParser from 'cookie-parser';
+import { NextFunction, Request, Response } from 'express';
 import { existsSync, mkdirSync, readdirSync } from 'fs';
 import { join } from 'path';
 import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './common/http-exception.filter';
+import { LegacyMiddleware } from './legacy/legacy.middleware';
 import { uploadDir } from './photos/upload.config';
 
 function stripSlash(url: string): string {
@@ -64,6 +66,14 @@ async function bootstrap() {
 
   app.use(cookieParser());
   app.useGlobalFilters(new AllExceptionsFilter());
+
+  // ---- Legacy backlinks (MUST run before static assets) ---------------------
+  // Canonical host/HTTPS + /index.html + /{Category}/{Photo}.html + image hotlinks.
+  // See server/src/legacy/legacy-redirects.ts
+  const legacyMiddleware = app.get(LegacyMiddleware);
+  app.use((req: Request, res: Response, next: NextFunction) =>
+    legacyMiddleware.use(req, res, next),
+  );
 
   // ---- CORS -----------------------------------------------------------------
   // Admin UI and gallery may be hosted on a different origin than the API

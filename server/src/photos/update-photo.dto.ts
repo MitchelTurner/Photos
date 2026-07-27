@@ -57,6 +57,10 @@ export class UpdatePhotoDto {
   @IsOptional()
   @IsString()
   keywords?: string;
+
+  @IsOptional()
+  @IsString()
+  legacySlug?: string;
 }
 
 export class EnrichPhotoDto {

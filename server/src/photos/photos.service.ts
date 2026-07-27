@@ -309,6 +309,7 @@ export class PhotosService {
       seoTitle?: string;
       seoDescription?: string;
       keywords?: string;
+      legacySlug?: string;
     },
   ) {
     await this.require(id);
@@ -329,6 +330,12 @@ export class PhotosService {
         seoTitle: body.seoTitle?.trim(),
         seoDescription: body.seoDescription?.trim(),
         keywords: body.keywords?.trim(),
+        legacySlug:
+          body.legacySlug === undefined
+            ? undefined
+            : body.legacySlug.trim()
+              ? body.legacySlug.trim().toLowerCase()
+              : null,
       },
     });
     return {

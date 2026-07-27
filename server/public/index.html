@@ -682,7 +682,7 @@
    server/src/catalog.ts — never trust client-submitted amounts.
    ========================================================================= */
 /* Same-origin when this page is served by the API (Railway); full URL for SiteGround. */
-const ON_API_HOST = /up\.railway\.app$|localhost|127\.0\.0\.1/.test(location.hostname);
+const ON_API_HOST = /up\.railway\.app$|ketchikanphotos\.com$|localhost|127\.0\.0\.1/.test(location.hostname);
 const CONFIG = {
   apiBase: ON_API_HOST ? "" : "https://phot-api.up.railway.app",
   checkoutEndpoint: ON_API_HOST ? "/checkout" : "https://phot-api.up.railway.app/checkout",
@@ -1062,6 +1062,33 @@ async function bootGallery(){
   }catch(_){ /* leave empty */ }
   renderGallery();
   injectPhotoJsonLd();
+  applyDeepLink();
+}
+
+/** Support /?photo=ID, /?cat=Wildlife, /?q=eagle from legacy redirects & shares. */
+function applyDeepLink(){
+  const params = new URLSearchParams(location.search);
+  const cat = (params.get("cat") || "").trim();
+  const q = (params.get("q") || "").trim().toLowerCase();
+  const photoId = Number(params.get("photo") || "");
+  if(cat){
+    const btn = [...document.querySelectorAll(".filter")].find(b => b.childNodes[0] && b.childNodes[0].textContent === cat);
+    if(btn) applyFilter(cat, btn);
+  } else if(q){
+    const hit = PHOTOS.find(p =>
+      (p.title||"").toLowerCase().includes(q) ||
+      (p.cat||"").toLowerCase().includes(q) ||
+      (p.keywords||"").toLowerCase().includes(q) ||
+      (p.description||"").toLowerCase().includes(q)
+    );
+    if(hit){
+      const btn = [...document.querySelectorAll(".filter")].find(b => b.childNodes[0] && b.childNodes[0].textContent === hit.cat);
+      if(btn) applyFilter(hit.cat, btn);
+    }
+  }
+  if(photoId && PHOTOS.some(p=>p.id===photoId)){
+    openLB(photoId);
+  }
 }
 
 /** ImageObject JSON-LD so search engines can read AI/SEO descriptions. */

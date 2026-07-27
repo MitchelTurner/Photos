@@ -81,9 +81,12 @@ Quick check — View Source on the domain. You want `bootGallery` / `apiBase`. I
 
 ### Option A — Point the domain at Railway (recommended)
 
-1. Railway → service → **Settings → Networking → Custom Domain** → `ketchikanphotos.com` + `www`
-2. At DNS, add the CNAME/ALIAS Railway shows (replace the SiteGround A record `35.215.126.117`)
-3. Set Railway `SITE_URL=https://ketchikanphotos.com`
+1. Railway → service → **Settings → Networking → Custom Domain** → `ketchikanphotos.com` **and** `www.ketchikanphotos.com`
+2. At DNS, add the CNAME/ALIAS Railway shows for **both** apex and `www` (replace the SiteGround A record `35.215.126.117`)
+3. Set Railway `SITE_URL=https://ketchikanphotos.com` and `PUBLIC_API_URL=https://ketchikanphotos.com`
+4. Optional: `CANONICAL_HOST=ketchikanphotos.com` (default). Middleware 301s `http://` + `www` → `https://ketchikanphotos.com/…` in **one hop**.
+
+**If `www` does not resolve, every old backlink that uses www is dead** — add the www custom domain before relying on legacy redirects. See `docs/LEGACY_REDIRECTS.md`.
 
 ### Option B — Manual SiteGround upload (fastest if you keep SiteGround hosting)
 

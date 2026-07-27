@@ -18,6 +18,8 @@ import { AuthController, HealthController } from './auth/auth.controller';
 import { AuthService } from './auth/auth.service';
 import { CheckoutController } from './checkout/checkout.controller';
 import { CheckoutService } from './checkout/checkout.service';
+import { LegacyMiddleware } from './legacy/legacy.middleware';
+import { LegacyService } from './legacy/legacy.service';
 import { OrdersService } from './orders/orders.service';
 import { AdminGuard } from './photos/admin.guard';
 import { ClaudeEnrichService } from './photos/claude-enrich.service';
@@ -47,6 +49,9 @@ import { WebhookController } from './webhook/webhook.controller';
     ProdigiService,
     PhotosService,
     ClaudeEnrichService,
+    LegacyService,
+    LegacyMiddleware,
   ],
+  exports: [LegacyService, LegacyMiddleware],
 })
 export class AppModule {}
