@@ -51,6 +51,8 @@ Optional: still mount a volume at `/data/uploads` as a local cache (`UPLOAD_DIR=
 | `ADMIN_EMAIL` | Admin login |
 | `ADMIN_PASSWORD` | Admin password (prefer this over a stale `ADMIN_PASSWORD_HASH`) |
 | `ADMIN_SESSION_SECRET` | `openssl rand -hex 32` |
+| `ANTHROPIC_API_KEY` | Claude Vision for photo descriptions + SEO (`/admin` → AI describe) |
+| `ANTHROPIC_MODEL` | Optional; default `claude-sonnet-4-5` |
 
 ## 3. After deploy
 
@@ -58,6 +60,13 @@ Optional: still mount a volume at `/data/uploads` as a local cache (`UPLOAD_DIR=
 - Health: `https://YOUR-SERVICE.up.railway.app/health`
 - Admin: `https://YOUR-SERVICE.up.railway.app/admin/`
 - Stripe webhook: `https://YOUR-SERVICE.up.railway.app/webhook/stripe`
+
+### Claude photo SEO
+
+With `ANTHROPIC_API_KEY` set, open `/admin/` and use **AI describe** on a photo (or
+**AI enrich missing** for the library). Claude looks at the image and fills
+title, category, description, alt text, SEO title/description, and keywords.
+Those fields show in the lightbox and as ImageObject JSON-LD on the gallery.
 
 ## 4. Why photos show on Railway but not ketchikanphotos.com
 

@@ -261,8 +261,13 @@
       <section class="panel">
         <div style="display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap;margin-bottom:1rem">
           <h2 style="margin:0">Your photos</h2>
-          <button type="button" class="secondary" id="refresh">Refresh</button>
+          <div style="display:flex;flex-wrap:wrap;gap:.45rem">
+            <button type="button" class="secondary" id="enrichAll" title="Claude Vision writes titles, descriptions, alt text, and SEO fields">AI enrich missing</button>
+            <button type="button" class="secondary" id="refresh">Refresh</button>
+          </div>
         </div>
+        <p class="hint" id="aiHint">Claude Vision can describe each photo and fill SEO fields. Set <code>ANTHROPIC_API_KEY</code> on Railway.</p>
+        <p class="msg" id="aiMsg"></p>
         <div class="list" id="list"><p class="empty">Loading…</p></div>
       </section>
 
@@ -433,6 +438,7 @@
         const me = await api("/auth/me");
         showApp(me.email);
         await loadList();
+        await refreshAiHint();
         return true;
       } catch {
         return false;
@@ -468,6 +474,7 @@
         setMsg(gateMsg, "", true);
         showApp(data.email);
         await loadList();
+        await refreshAiHint();
       } catch (err) {
         setMsg(gateMsg, err.message, false);
       } finally {
@@ -489,16 +496,20 @@
           : "";
         listEl.innerHTML = warn + rows.map((p) => `
           <article class="item" data-id="${p.id}" data-sale="${p.forSale}" data-pub="${p.published}" style="${p.fileMissing ? "opacity:.55;outline:1px solid #b04a30" : ""}">
-            <img src="${p.fileMissing ? "" : p.src}" alt="" />
+            <img src="${p.fileMissing ? "" : p.src}" alt="${escapeHtml(p.alt || p.title)}" />
             <div>
               <p class="t">${escapeHtml(p.title)}</p>
               <p class="meta">${escapeHtml(p.cat)} · #${p.id}
                 ${p.published ? "· live" : "· hidden"}
                 ${p.forSale ? "· for sale" : "· not for sale"}
+                ${p.aiEnrichedAt ? "· AI SEO" : "· needs AI"}
                 ${p.fileMissing ? "· <b style='color:#b04a30'>file missing</b>" : ""}
               </p>
+              ${p.description ? `<p class="meta" style="text-transform:none;letter-spacing:0;font-family:inherit;font-size:.82rem;margin-top:.35rem;color:#3a4d52">${escapeHtml(p.description)}</p>` : ""}
+              ${p.seoDescription ? `<p class="meta" style="margin-top:.25rem">SEO · ${escapeHtml(p.seoDescription)}</p>` : ""}
             </div>
             <div class="actions">
+              <button type="button" class="secondary" data-act="ai" ${p.fileMissing ? "disabled" : ""}>AI describe</button>
               <button type="button" class="secondary" data-act="sale">${p.forSale ? "Unlist sale" : "List for sale"}</button>
               <button type="button" class="secondary" data-act="pub">${p.published ? "Unpublish" : "Publish"}</button>
               <button type="button" class="danger" data-act="del">Delete</button>
@@ -526,6 +537,17 @@
         if (act === "del") {
           if (!confirm("Delete this photo permanently?")) return;
           await api("/admin/photos/" + id, { method: "DELETE" });
+        } else if (act === "ai") {
+          setMsg(document.getElementById("aiMsg"), "Claude is looking at #" + id + "…", true);
+          const out = await api("/admin/photos/" + id + "/enrich", {
+            method: "POST",
+            json: { apply: true, overwriteTitle: true, overwriteCategory: true },
+          });
+          setMsg(
+            document.getElementById("aiMsg"),
+            "Updated #" + id + " — " + (out.draft && out.draft.title ? out.draft.title : "ok"),
+            true,
+          );
         } else if (act === "sale") {
           await api("/admin/photos/" + id, {
             method: "PATCH",
@@ -539,11 +561,44 @@
         }
         await loadList();
       } catch (err) {
-        alert(err.message);
+        if (act === "ai") setMsg(document.getElementById("aiMsg"), err.message, false);
+        else alert(err.message);
       } finally {
         btn.disabled = false;
       }
     }
+
+    async function refreshAiHint() {
+      const el = document.getElementById("aiHint");
+      try {
+        const st = await api("/admin/ai/status");
+        if (st.configured) {
+          el.innerHTML = "Claude Vision ready (<code>" + escapeHtml(st.model) + "</code>). Use <b>AI describe</b> per photo or <b>AI enrich missing</b> for the whole library.";
+        } else {
+          el.innerHTML = "Set Railway variable <code>ANTHROPIC_API_KEY</code> (from console.anthropic.com), redeploy, then use AI describe / AI enrich missing.";
+        }
+      } catch (_) { /* ignore before login */ }
+    }
+
+    document.getElementById("enrichAll").addEventListener("click", async () => {
+      const btn = document.getElementById("enrichAll");
+      const msg = document.getElementById("aiMsg");
+      if (!confirm("Run Claude Vision on photos that still need descriptions/SEO? This uses Anthropic API credits.")) return;
+      btn.disabled = true;
+      setMsg(msg, "Enriching library with Claude…", true);
+      try {
+        const out = await api("/admin/photos/enrich-all", {
+          method: "POST",
+          json: { onlyMissing: true, limit: 25, overwriteTitle: true, overwriteCategory: true },
+        });
+        setMsg(msg, "AI enrich done — " + out.succeeded + " ok, " + out.failed + " failed (of " + out.processed + ")", out.failed === 0);
+        await loadList();
+      } catch (err) {
+        setMsg(msg, err.message, false);
+      } finally {
+        btn.disabled = false;
+      }
+    });
 
     const fileInput = document.getElementById("file");
     const titleInput = document.getElementById("title");
@@ -673,7 +728,10 @@
       } catch (_) { /* ignore */ }
     }
 
-    restoreSession().then(() => loadAuthHint());
+    restoreSession().then(async (ok) => {
+      await loadAuthHint();
+      if (ok) await refreshAiHint();
+    });
   </script>
 </body>
 </html>

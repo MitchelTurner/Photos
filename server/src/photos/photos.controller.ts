@@ -10,8 +10,11 @@
  *   GET    /admin/photos         Full list; fileMissing=true when no blob
  *   POST   /admin/photos         multipart field "file" + metadata fields
  *   POST   /admin/photos/bulk    multipart field "files" (max 40) + shared meta
- *   PATCH  /admin/photos/:id     title / category / forSale / published / …
+ *   PATCH  /admin/photos/:id     title / category / SEO fields / forSale / …
  *   DELETE /admin/photos/:id     removes Photo (+ cascade PhotoBlob) and disk file
+ *   GET    /admin/ai/status      Claude Vision configured?
+ *   POST   /admin/photos/:id/enrich   Claude describes + SEO for one photo
+ *   POST   /admin/photos/enrich-all   Batch enrich (sequential)
  *
  * Multipart field names must match the admin UI FormData keys exactly.
  * Bulk titles always come from each original filename (see PhotosService).
@@ -33,8 +36,13 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { AdminGuard } from './admin.guard';
+import { ClaudeEnrichService } from './claude-enrich.service';
 import { PhotosService } from './photos.service';
-import { UpdatePhotoDto } from './update-photo.dto';
+import {
+  EnrichAllDto,
+  EnrichPhotoDto,
+  UpdatePhotoDto,
+} from './update-photo.dto';
 import { photoMulterOptions } from './upload.config';
 
 type UploadBody = {
@@ -50,7 +58,10 @@ type UploadBody = {
 
 @Controller()
 export class PhotosController {
-  constructor(private readonly photos: PhotosService) {}
+  constructor(
+    private readonly photos: PhotosService,
+    private readonly claude: ClaudeEnrichService,
+  ) {}
 
   /** Public gallery feed */
   @Get('photos')
@@ -63,6 +74,12 @@ export class PhotosController {
   @UseGuards(AdminGuard)
   listAdmin() {
     return this.photos.listAllAdmin();
+  }
+
+  @Get('admin/ai/status')
+  @UseGuards(AdminGuard)
+  aiStatus() {
+    return this.claude.status();
   }
 
   /** Admin: upload one photo for sale / gallery */
@@ -85,6 +102,26 @@ export class PhotosController {
     @Body() body: UploadBody,
   ) {
     return this.photos.createManyFromUpload(files, body);
+  }
+
+  /**
+   * Claude Vision: describe + SEO for every photo missing copy (or all).
+   * Registered before :id routes so "enrich-all" is not parsed as an id.
+   */
+  @Post('admin/photos/enrich-all')
+  @UseGuards(AdminGuard)
+  enrichAll(@Body() body: EnrichAllDto) {
+    return this.claude.enrichMany(body || {});
+  }
+
+  /** Claude Vision: describe + SEO for one photo */
+  @Post('admin/photos/:id/enrich')
+  @UseGuards(AdminGuard)
+  enrichOne(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() body: EnrichPhotoDto,
+  ) {
+    return this.claude.enrichOne(id, body || {});
   }
 
   @Patch('admin/photos/:id')

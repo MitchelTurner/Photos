@@ -20,6 +20,7 @@ import { CheckoutController } from './checkout/checkout.controller';
 import { CheckoutService } from './checkout/checkout.service';
 import { OrdersService } from './orders/orders.service';
 import { AdminGuard } from './photos/admin.guard';
+import { ClaudeEnrichService } from './photos/claude-enrich.service';
 import { MediaController } from './photos/media.controller';
 import { PhotosController } from './photos/photos.controller';
 import { PhotosService } from './photos/photos.service';
@@ -45,6 +46,7 @@ import { WebhookController } from './webhook/webhook.controller';
     OrdersService,
     ProdigiService,
     PhotosService,
+    ClaudeEnrichService,
   ],
 })
 export class AppModule {}

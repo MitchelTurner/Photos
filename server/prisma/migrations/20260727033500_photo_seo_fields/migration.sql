@@ -1,0 +1,7 @@
+-- AlterTable
+ALTER TABLE "Photo" ADD COLUMN     "description" TEXT NOT NULL DEFAULT '';
+ALTER TABLE "Photo" ADD COLUMN     "altText" TEXT NOT NULL DEFAULT '';
+ALTER TABLE "Photo" ADD COLUMN     "seoTitle" TEXT NOT NULL DEFAULT '';
+ALTER TABLE "Photo" ADD COLUMN     "seoDescription" TEXT NOT NULL DEFAULT '';
+ALTER TABLE "Photo" ADD COLUMN     "keywords" TEXT NOT NULL DEFAULT '';
+ALTER TABLE "Photo" ADD COLUMN     "aiEnrichedAt" TIMESTAMP(3);

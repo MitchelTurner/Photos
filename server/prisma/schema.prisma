@@ -93,6 +93,18 @@ model Photo {
   forSale     Boolean    @default(true)
   published   Boolean    @default(true)
   sortOrder   Int        @default(0)
+  /// Longer caption for lightbox + SEO body copy (Claude-generated or manual)
+  description String     @default("") @db.Text
+  /// Accessible / SEO image alt text
+  altText     String     @default("")
+  /// Optional ~60-char title suggestion for search snippets
+  seoTitle    String     @default("")
+  /// Optional ~155-char meta description
+  seoDescription String  @default("")
+  /// Comma-separated keywords / entities for SEO
+  keywords    String     @default("")
+  /// When Claude Vision last wrote the SEO fields
+  aiEnrichedAt DateTime?
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
   /// Image bytes kept in Postgres so redeploys without a volume don't wipe the gallery

@@ -337,6 +337,7 @@
   .lb-cap .t{font-family:"Bricolage Grotesque",sans-serif;font-weight:600;font-size:clamp(1.15rem,2.2vw,1.6rem);letter-spacing:-.02em;margin-top:.3rem}
   .lb-cap .fieldnote{font-family:"Space Mono",monospace;font-size:.7rem;color:var(--fog-2);margin-top:.55rem;display:flex;flex-wrap:wrap;gap:.25rem 1.1rem}
   .lb-cap .fieldnote b{color:var(--verdigris);font-weight:400}
+  .lb-cap .desc{margin-top:.75rem;font-size:.95rem;line-height:1.45;color:var(--fog);max-width:62ch}
   .lb-btn{position:absolute;top:50%;transform:translateY(-50%);z-index:5;background:rgba(234,237,233,.08);border:1px solid rgba(234,237,233,.2);color:var(--fog);width:44px;height:44px;border-radius:50%;cursor:pointer;font-size:1.25rem;display:grid;place-items:center;transition:background .2s var(--ease)}
   .lb-btn:hover{background:var(--salmon);border-color:var(--salmon)}
   .lb-prev{left:clamp(4px,1.5vw,18px)}
@@ -697,6 +698,10 @@ const PRINT_OPTIONS = [
   { key:"24x36", label:"24 × 36 in", sub:"metal / acrylic", price:28000 },
 ];
 const money = c => "$" + (c/100).toLocaleString("en-US",{minimumFractionDigits:(c%100?2:0),maximumFractionDigits:2});
+function escapeHtml(s){
+  return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+function escapeAttr(s){ return escapeHtml(s).replace(/'/g,"&#39;"); }
 
 /* ---------- build placeholder scene (duotone) ---------- */
 function sceneSVG(p){
@@ -757,7 +762,7 @@ function renderGallery(){
     card.innerHTML=`
       <div class="frame">
         <img class="scene" src="${sceneSVG(p)}" alt="" aria-hidden="true">
-        ${p.src?`<img class="photo" alt="${p.title}, Ketchikan Alaska">`:''}
+        ${p.src?`<img class="photo" alt="${escapeAttr(p.alt || (p.title + ', Ketchikan Alaska'))}">`:''}
         <span class="cat">${p.cat}</span>
         <div class="plate">
           <div class="t">${p.title}</div>
@@ -824,7 +829,7 @@ let lbSize = PRINT_OPTIONS[0].key;
 function renderLB(){
   const p=lbList[lbIdx];
   lbFrame.innerHTML = `<img class="scene" src="${sceneSVG({...p,h:0.68})}" alt="">`+
-    (p.src?`<img class="photo" src="${p.src}" alt="${p.title}, Ketchikan Alaska">`:'');
+    (p.src?`<img class="photo" src="${p.src}" alt="${escapeAttr(p.alt || (p.title + ', Ketchikan Alaska'))}">`:'');
   const forSale = p.forSale !== false;
   const sizes = PRINT_OPTIONS.map(o=>`
     <button class="size-opt" type="button" data-size="${o.key}" aria-pressed="${o.key===lbSize}" ${forSale?'':'disabled'}>
@@ -834,6 +839,7 @@ function renderLB(){
     <div class="cat">${p.cat}</div>
     <div class="t">${p.title}</div>
     <div class="fieldnote">${fieldnote(p)}</div>
+    ${p.description ? `<p class="desc">${escapeHtml(p.description)}</p>` : ""}
     <div class="buy">
       ${forSale?`
       <div class="sizes" role="group" aria-label="Print size">${sizes}</div>
@@ -1043,12 +1049,49 @@ async function bootGallery(){
         PHOTOS = rows.map(p=>({
           id:p.id, cat:p.cat, title:p.title, coord:p.coord||"", cond:p.cond||"",
           when:p.when||"", h:p.h||1.25, tone:p.tone||["#12333a","#2a5a55"],
-          src:p.src||"", forSale:p.forSale!==false
+          src:p.src||"", forSale:p.forSale!==false,
+          description:p.description||"", alt:p.alt||"",
+          seoTitle:p.seoTitle||"", seoDescription:p.seoDescription||"",
+          keywords:p.keywords||""
         }));
       }
     }
   }catch(_){ /* leave empty */ }
   renderGallery();
+  injectPhotoJsonLd();
+}
+
+/** ImageObject JSON-LD so search engines can read AI/SEO descriptions. */
+function injectPhotoJsonLd(){
+  const id="photo-jsonld";
+  const prev=document.getElementById(id);
+  if(prev) prev.remove();
+  if(!PHOTOS.length) return;
+  const data={
+    "@context":"https://schema.org",
+    "@type":"ImageGallery",
+    "name":"Ketchikan Photos",
+    "url": location.origin + location.pathname,
+    "image": PHOTOS.filter(p=>p.src).slice(0,40).map(p=>({
+      "@type":"ImageObject",
+      "contentUrl": p.src,
+      "name": p.seoTitle || p.title,
+      "description": p.seoDescription || p.description || p.title,
+      "caption": p.description || p.title,
+      "keywords": p.keywords || undefined,
+      "creditText":"Ketchikan Photos"
+    }))
+  };
+  const s=document.createElement("script");
+  s.type="application/ld+json";
+  s.id=id;
+  s.textContent=JSON.stringify(data);
+  document.head.appendChild(s);
+  const withSeo=PHOTOS.find(p=>p.seoDescription);
+  if(withSeo){
+    let meta=document.querySelector('meta[name="description"]');
+    if(meta && !meta.dataset.locked) meta.setAttribute("content", withSeo.seoDescription);
+  }
 }
 bootGallery();
 </script>

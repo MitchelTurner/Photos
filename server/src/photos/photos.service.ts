@@ -59,6 +59,11 @@ export type PhotoPublic = {
   tone: [string, string];
   src: string;
   forSale: boolean;
+  description: string;
+  alt: string;
+  seoTitle: string;
+  seoDescription: string;
+  keywords: string;
 };
 
 @Injectable()
@@ -77,6 +82,11 @@ export class PhotosService {
       tone: [photo.toneA, photo.toneB],
       src: mediaUrl(photo.filename),
       forSale: photo.forSale,
+      description: photo.description || '',
+      alt: photo.altText || `${photo.title}, Ketchikan Alaska`,
+      seoTitle: photo.seoTitle || '',
+      seoDescription: photo.seoDescription || '',
+      keywords: photo.keywords || '',
     };
   }
 
@@ -131,6 +141,7 @@ export class PhotosService {
       filename: p.filename,
       fileMissing: !p.blob,
       blobBytes: p.blob?.size ?? 0,
+      aiEnrichedAt: p.aiEnrichedAt,
       createdAt: p.createdAt,
     }));
   }
@@ -293,6 +304,11 @@ export class PhotosService {
       forSale?: boolean;
       published?: boolean;
       sortOrder?: number;
+      description?: string;
+      altText?: string;
+      seoTitle?: string;
+      seoDescription?: string;
+      keywords?: string;
     },
   ) {
     await this.require(id);
@@ -308,6 +324,11 @@ export class PhotosService {
         forSale: body.forSale,
         published: body.published,
         sortOrder: body.sortOrder,
+        description: body.description?.trim(),
+        altText: body.altText?.trim(),
+        seoTitle: body.seoTitle?.trim(),
+        seoDescription: body.seoDescription?.trim(),
+        keywords: body.keywords?.trim(),
       },
     });
     return {

@@ -136,6 +136,12 @@ Photos live on the Railway API. If the custom domain still shows placeholder
 frames, SiteGround is serving an old `index.html`. Sync it (File Manager or the
 FTP GitHub Action) or point DNS at Railway — details in **RAILWAY.md §4**.
 
+### Claude Vision SEO
+
+Set `ANTHROPIC_API_KEY` on Railway, then in `/admin/` use **AI describe** (one
+photo) or **AI enrich missing** (batch). Claude fills description, alt text,
+SEO title/description, and keywords from the image.
+
 ## Notes
 
 - Shipping address + phone are collected in Stripe Checkout.
