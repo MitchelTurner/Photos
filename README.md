@@ -124,12 +124,17 @@ Keep these in sync:
 Step-by-step: see **[RAILWAY.md](./RAILWAY.md)**.
 
 Summary:
-- Root Directory = `/` (repo root) — forces Node via root `package.json`
-  (or `server` + `/server/railway.toml`)
-- Add Postgres + volume at `/data/uploads`
+- Root Directory = `server` + Dockerfile (`/server/railway.toml`)
+- Add Postgres (+ optional volume at `/data/uploads`)
 - Start runs `prisma migrate deploy` then the Nest API
-- Health: `GET /health` · Admin: `/admin/`
+- Health: `GET /health` · Admin: `/admin/` · Gallery: `/`
 - Stripe webhook → `https://<your-api>/webhook/stripe`
+
+### Custom domain (ketchikanphotos.com)
+
+Photos live on the Railway API. If the custom domain still shows placeholder
+frames, SiteGround is serving an old `index.html`. Sync it (File Manager or the
+FTP GitHub Action) or point DNS at Railway — details in **RAILWAY.md §4**.
 
 ## Notes
 
